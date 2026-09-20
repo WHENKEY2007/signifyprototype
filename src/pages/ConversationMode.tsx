@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Volume2, VolumeX, Camera, Trash2, X, Check } from 'lucide-react';
 import { speechService } from '../services/speechService';
 import { recognitionService } from '../services/recognitionService';
+import { sentenceBuilder } from '../services/sentenceBuilderService';
 import { CameraPreview } from '../components/CameraPreview';
 
 export interface ConversationMessage {
@@ -63,9 +64,14 @@ export const ConversationMode: React.FC<ConversationModeProps> = ({
 
     setTimeout(async () => {
       const res = await recognitionService.recognizeSign();
-      setDetectedSign({ sign: res.sign, text: res.text, confidence: res.confidence });
+      const sentenceResult = sentenceBuilder.buildSentence([res.word]);
+      setDetectedSign({
+        sign: res.word,
+        text: sentenceResult.primary || res.text,
+        confidence: res.confidence,
+      });
       setSignStatus('detected');
-    }, 900);
+    }, 700);
   };
 
   const handleConfirmSignMessage = () => {

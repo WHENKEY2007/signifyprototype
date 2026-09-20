@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { RefreshCw, ArrowRight, Sparkles, Smartphone, Cpu, Zap, Cloud, Radio } from 'lucide-react';
-import { DEMO_SIGNS } from '../services/recognitionService';
+import { RefreshCw, ArrowRight, Sparkles, Smartphone, Cpu, Zap, Cloud, Radio, Layers } from 'lucide-react';
 import { hapticService } from '../services/hapticService';
 
 interface DesktopEditorialLayoutProps {
@@ -20,11 +19,10 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
   onTriggerUncertain,
   onResetDemo,
 }) => {
-  const demoSignKeys = Object.keys(DEMO_SIGNS);
   const [benchmarkMode, setBenchmarkMode] = useState<'npu' | 'cloud'>('npu');
 
   return (
-    <div className="min-h-screen w-full bg-black text-white relative overflow-x-hidden flex flex-col justify-between selection:bg-brand-gold selection:text-black">
+    <div className="min-h-screen w-full bg-[#050505] text-white relative overflow-x-hidden flex flex-col justify-between selection:bg-brand-gold selection:text-black">
       {/* Subtle Background Tech Grid */}
       <div className="absolute inset-0 bg-grid-tech opacity-30 pointer-events-none" />
 
@@ -38,7 +36,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
             <span className="font-sans font-black tracking-widest text-xs sm:text-sm text-white">SIGNIFY</span>
             <span className="text-neutral-600 text-xs font-mono">//</span>
             <span className="font-mono text-[11px] font-bold text-neutral-300 uppercase">
-              TWO-WAY AI COMMUNICATION ASSISTANT
+              AI-POWERED SIGN RECOGNITION WITH CONTEXTUAL SENTENCE FORMATION
             </span>
           </div>
           <span className="hidden sm:inline-block px-1.5 py-0.2 bg-brand-gold text-black font-mono text-[8px] font-black uppercase tracking-wider">
@@ -49,7 +47,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
         <div className="flex items-center gap-4 text-xs font-mono">
           <div className="hidden md:flex items-center gap-2">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse shadow-[0_0_8px_#FFD000]" />
-            <span className="font-semibold text-brand-gold text-[10px]">ON-DEVICE NPU ACCELERATED</span>
+            <span className="font-semibold text-brand-gold text-[10px]">ON-DEVICE AI READY</span>
           </div>
 
           {onResetDemo && (
@@ -73,9 +71,9 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
           <div className="space-y-3.5">
             {/* Tagline Ribbon */}
             <div className="flex items-center gap-2 text-[10px] font-bold">
-              <span className="text-brand-gold">● [01] VISION</span>
+              <span className="text-brand-gold">● [01] WORD</span>
               <span className="text-neutral-700">/</span>
-              <span className="text-brand-gold">[02] AI</span>
+              <span className="text-brand-gold">[02] CONTEXT</span>
               <span className="text-neutral-700">/</span>
               <span className="text-brand-gold">[03] VOICE</span>
             </div>
@@ -92,29 +90,37 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
               </h1>
 
               <p className="font-sans text-[11px] leading-relaxed text-neutral-400 font-normal">
-                Phone-first on-device AI translating sign language to real-time speech and reverse spoken audio to visual text.
+                AI-powered sign recognition with contextual sentence formation. Turns individual signs into natural phrases and speech.
               </p>
             </div>
 
-            {/* Compact Pipeline Card */}
-            <div className="border border-neutral-800 bg-neutral-950 p-3 relative">
+            {/* Product Architecture Card */}
+            <div className="border border-neutral-800 bg-neutral-950 p-3.5 relative">
               <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-brand-gold" />
               <div className="font-mono text-[9px] font-bold text-neutral-400 mb-2 flex items-center justify-between">
-                <span>PIPELINE</span>
-                <span className="text-black bg-brand-gold px-1 text-[8px] font-black">REAL-TIME</span>
+                <span>PRODUCT ARCHITECTURE</span>
+                <span className="text-black bg-brand-gold px-1 text-[8px] font-black">5-STEP</span>
               </div>
               <div className="space-y-1.5 text-[10px]">
                 <div className="flex items-center gap-2 text-neutral-300">
-                  <span className="w-3.5 h-3.5 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">1</span>
-                  <span className="truncate">CAMERA 21-PT SKELETON</span>
+                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">1</span>
+                  <span className="truncate">SIGN: User performs gesture</span>
                 </div>
                 <div className="flex items-center gap-2 text-neutral-300">
-                  <span className="w-3.5 h-3.5 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">2</span>
-                  <span className="truncate">CONFIDENCE GATING (≥75%)</span>
+                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">2</span>
+                  <span className="truncate">WORD: AI detects word (≥75% gate)</span>
                 </div>
                 <div className="flex items-center gap-2 text-neutral-300">
-                  <span className="w-3.5 h-3.5 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">3</span>
-                  <span className="truncate">SYNTHESIS &amp; DUAL SPEAKERS</span>
+                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">3</span>
+                  <span className="truncate">CONTEXT: Words combined</span>
+                </div>
+                <div className="flex items-center gap-2 text-neutral-300">
+                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">4</span>
+                  <span className="truncate">SENTENCE: Natural phrase synthesis</span>
+                </div>
+                <div className="flex items-center gap-2 text-neutral-300">
+                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">5</span>
+                  <span className="truncate">VOICE: Spoken via SpeechSynthesis</span>
                 </div>
               </div>
             </div>
@@ -122,36 +128,57 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
             {/* Judge Demo Selector Shortcuts */}
             <div className="border border-neutral-800 bg-neutral-950 p-3 space-y-2">
               <div className="font-mono text-[9px] font-bold text-neutral-400 uppercase tracking-wider flex items-center justify-between">
-                <span>DEMO SIGNS</span>
-                <span className="text-[8px] text-brand-gold font-bold">1-TAP INFERENCE</span>
+                <span className="flex items-center gap-1">
+                  <Layers className="w-3 h-3 text-brand-gold" />
+                  <span>JUDGE DEMO SEQUENCES</span>
+                </span>
+                <span className="text-[8px] text-brand-gold font-bold">1-CLICK</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5">
-                {demoSignKeys.slice(0, 3).map((sign, idx) => (
-                  <button
-                    key={sign}
-                    onClick={() => onSelectDemoSign?.(sign)}
-                    className="px-1.5 py-1.5 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group rounded"
-                  >
-                    <div className="text-[7px] text-neutral-500 group-hover:text-brand-gold">0{idx + 1}</div>
-                    <div className="font-bold truncate">{sign}</div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => onSelectDemoSign?.('HELLO')}
+                  className="px-2 py-1.5 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group"
+                >
+                  <div className="text-[7px] text-neutral-500 group-hover:text-brand-gold">01</div>
+                  <div className="font-bold truncate text-brand-gold">HELLO</div>
+                </button>
+                <button
+                  onClick={() => onSelectDemoSign?.('HOW')}
+                  className="px-2 py-1.5 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group"
+                >
+                  <div className="text-[7px] text-neutral-500 group-hover:text-brand-gold">02</div>
+                  <div className="font-bold truncate text-brand-gold">HOW</div>
+                </button>
+                <button
+                  onClick={() => onSelectDemoSign?.('YOU')}
+                  className="px-2 py-1.5 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group"
+                >
+                  <div className="text-[7px] text-neutral-500 group-hover:text-brand-gold">03</div>
+                  <div className="font-bold truncate text-brand-gold">YOU</div>
+                </button>
+                <button
+                  onClick={() => onSelectDemoSign?.('HELP')}
+                  className="px-2 py-1.5 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group"
+                >
+                  <div className="text-[7px] text-neutral-500 group-hover:text-brand-gold">04</div>
+                  <div className="font-bold truncate text-brand-gold">HELP</div>
+                </button>
               </div>
 
               {onTriggerUncertain && (
                 <button
                   onClick={onTriggerUncertain}
-                  className="w-full px-2 py-1.5 border border-dashed border-amber-600/70 bg-amber-950/30 hover:bg-amber-950/60 text-amber-200 font-mono text-[9px] font-bold flex items-center justify-between transition-colors rounded"
-                  title="Test low-confidence safety handling"
+                  className="w-full px-2 py-2 border border-dashed border-amber-600/70 bg-amber-950/30 hover:bg-amber-950/60 text-amber-200 font-mono text-[9px] font-bold flex items-center justify-between transition-colors"
+                  title="Test low-confidence safety handling (<75%)"
                 >
-                  <span>TRIGGER UNCERTAINTY (48%)</span>
+                  <span>TEST LOW CONFIDENCE (48%)</span>
                   <span className="px-1 bg-brand-gold text-black text-[7px] font-black">SAFETY TEST</span>
                 </button>
               )}
             </div>
 
-            {/* ADDON: Haptic Silent Confirmation Tester for Judges */}
+            {/* Haptic Silent Confirmation Tester for Judges */}
             <div className="border border-neutral-800 bg-neutral-950 p-3 space-y-2 rounded">
               <div className="flex items-center justify-between text-[9px] font-mono">
                 <span className="text-brand-gold font-bold flex items-center gap-1.5">
@@ -206,7 +233,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
         <div className="hidden xl:flex flex-col justify-between w-[250px] h-[840px] py-2 select-none font-mono text-xs">
           <div className="space-y-3">
             
-            {/* ADDON: On-Device NPU vs. Cloud Interactive Benchmark Widget */}
+            {/* On-Device NPU vs. Cloud Interactive Benchmark Widget */}
             <div className="border border-neutral-800 bg-neutral-950 p-3 relative rounded shadow-md">
               <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-brand-gold" />
               
@@ -309,7 +336,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
                   }`}
                 >
-                  <span>2. SIGN MODE</span>
+                  <span>2. LIVE SIGNING</span>
                   <ArrowRight className="w-2.5 h-2.5" />
                 </button>
                 <button
@@ -349,9 +376,9 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
       {/* Footer */}
       <footer className="relative z-20 w-full border-t border-neutral-900 bg-black px-4 lg:px-8 py-2 flex items-center justify-between text-[9px] font-mono text-neutral-500">
         <div className="flex items-center gap-3">
-          <span>SIGNIFY v0.2</span>
+          <span>SIGNIFY v0.3</span>
           <span>•</span>
-          <span className="text-neutral-400 font-semibold">ON-DEVICE ACCESSIBILITY AI</span>
+          <span className="text-neutral-400 font-semibold">AI-POWERED SIGN RECOGNITION WITH CONTEXTUAL SENTENCE FORMATION</span>
         </div>
         <div className="flex items-center gap-2">
           <span>FLAGSHIP HARDWARE OPTIMIZED</span>
@@ -360,4 +387,3 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
     </div>
   );
 };
-

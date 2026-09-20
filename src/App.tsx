@@ -21,21 +21,15 @@ const INITIAL_MESSAGES: ConversationMessage[] = [
   {
     id: 'msg-1',
     sender: 'signer',
-    text: 'Hello',
-    sign: 'HELLO',
+    text: 'Hello, how are you?',
+    sign: 'HELLO HOW YOU',
     timestamp: Date.now() - 60000,
   },
   {
     id: 'msg-2',
     sender: 'speaker',
-    text: 'Nice to meet you!',
+    text: "Hi! I'm doing well.",
     timestamp: Date.now() - 40000,
-  },
-  {
-    id: 'msg-3',
-    sender: 'signer',
-    text: 'Where are you going?',
-    timestamp: Date.now() - 20000,
   },
 ];
 
