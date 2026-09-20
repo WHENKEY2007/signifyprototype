@@ -1,281 +1,219 @@
 import React, { useState } from 'react';
 import { PhoneFrame } from './components/PhoneFrame';
 import { DesktopEditorialLayout } from './components/DesktopEditorialLayout';
-import { Header } from './components/Header';
-import { Intro } from './pages/Intro';
+import { BottomNav, NavTab } from './components/BottomNav';
 import { Home } from './pages/Home';
-import { ModeSelection } from './pages/ModeSelection';
-import { DemoMode } from './pages/DemoMode';
-import { Interpreter } from './pages/Interpreter';
-import { SentenceBuilder } from './pages/SentenceBuilder';
-import { SpeechOutput } from './pages/SpeechOutput';
-import { SpeechToText } from './pages/SpeechToText';
-import { UncertainState } from './pages/UncertainState';
-import { Success } from './pages/Success';
+import { SignMode } from './pages/SignMode';
+import { SpeakMode } from './pages/SpeakMode';
+import { ConversationMode, ConversationMessage } from './pages/ConversationMode';
+import { HelpMode } from './pages/HelpMode';
 import { Settings } from './pages/Settings';
-import { DEMO_SCENARIOS } from './data/demoScenarios';
 
 export type ScreenType =
-  | 'intro'
   | 'home'
-  | 'mode_selection'
-  | 'demo_mode'
-  | 'interpreter'
-  | 'sentence_builder'
-  | 'speech_output'
-  | 'speech_to_text'
-  | 'uncertain'
-  | 'success'
+  | 'sign'
+  | 'speak'
+  | 'conversation'
+  | 'help'
   | 'settings';
 
+const INITIAL_MESSAGES: ConversationMessage[] = [
+  {
+    id: 'msg-1',
+    sender: 'signer',
+    text: 'Hello',
+    sign: 'HELLO',
+    timestamp: Date.now() - 60000,
+  },
+  {
+    id: 'msg-2',
+    sender: 'speaker',
+    text: 'Nice to meet you!',
+    timestamp: Date.now() - 40000,
+  },
+  {
+    id: 'msg-3',
+    sender: 'signer',
+    text: 'Where are you going?',
+    timestamp: Date.now() - 20000,
+  },
+];
+
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('intro');
-  const [activeScenarioId, setActiveScenarioId] = useState<string>('hospital');
-  const [collectedSigns, setCollectedSigns] = useState<string[]>([]);
-  const [finalDeliveredMessage, setFinalDeliveredMessage] = useState<string>(
-    DEMO_SCENARIOS.hospital.finalSentence
-  );
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('home');
+  const [messages, setMessages] = useState<ConversationMessage[]>(INITIAL_MESSAGES);
+  const [preferredSign, setPreferredSign] = useState<string | undefined>(undefined);
+  const [forceUncertain, setForceUncertain] = useState<boolean>(false);
 
-  // Quick jump directly to a scenario from the judge desktop shortcuts
-  const handleSelectScenarioShortcut = (scenarioId: string) => {
-    setActiveScenarioId(scenarioId);
-    setCollectedSigns([]);
-    setCurrentScreen('interpreter');
+  // Message Handler for Conversation
+  const handleAddMessage = (sender: 'signer' | 'speaker', text: string, sign?: string) => {
+    const newMessage: ConversationMessage = {
+      id: `msg-${Date.now()}`,
+      sender,
+      text,
+      sign,
+      timestamp: Date.now(),
+    };
+    setMessages((prev) => [...prev, newMessage]);
   };
 
-  const handleTriggerUncertainShortcut = () => {
-    setCurrentScreen('uncertain');
+  const handleClearConversation = () => {
+    setMessages([]);
   };
 
-  const handleResetFlow = () => {
-    setCollectedSigns([]);
-    setActiveScenarioId('hospital');
-    setCurrentScreen('home');
+  // Flow Navigation Handlers
+  const handleSelectSign = (signKey?: string) => {
+    setPreferredSign(signKey);
+    setForceUncertain(false);
+    setCurrentScreen('sign');
   };
 
-  // Flow handlers
-  const handleStartExperience = () => {
-    setCurrentScreen('home');
+  const handleSelectSpeak = () => {
+    setCurrentScreen('speak');
   };
 
-  const handleStartInterpreting = () => {
-    setCurrentScreen('mode_selection');
+  const handleSelectConversation = () => {
+    setCurrentScreen('conversation');
   };
 
-  const handleTryDemo = () => {
-    setCurrentScreen('demo_mode');
-  };
-
-  const handleSelectSignToSpeech = () => {
-    setCurrentScreen('demo_mode');
-  };
-
-  const handleSelectSpeechToText = () => {
-    setCurrentScreen('speech_to_text');
-  };
-
-  const handleSelectScenario = (scenarioId: string) => {
-    setActiveScenarioId(scenarioId);
-    setCollectedSigns([]);
-    setCurrentScreen('interpreter');
-  };
-
-  const handleAddSignToSentence = (sign: string) => {
-    setCollectedSigns((prev) => (prev.includes(sign) ? prev : [...prev, sign]));
-  };
-
-  const handleCompleteSentence = (signs: string[]) => {
-    setCollectedSigns(signs);
-    setCurrentScreen('sentence_builder');
-  };
-
-  const handleSpeakMessage = (sentence: string) => {
-    setFinalDeliveredMessage(sentence);
-    setCurrentScreen('speech_output');
-  };
-
-  const handleFinishDelivery = () => {
-    setCurrentScreen('success');
-  };
-
-  const handleStartAgain = () => {
-    setCollectedSigns([]);
-    setCurrentScreen('demo_mode');
-  };
-
-  const handleBackToHome = () => {
-    setCollectedSigns([]);
-    setCurrentScreen('home');
+  const handleSelectHelp = () => {
+    setCurrentScreen('help');
   };
 
   const handleOpenSettings = () => {
     setCurrentScreen('settings');
   };
 
-  const getActiveScenario = () => {
-    return DEMO_SCENARIOS[activeScenarioId] || DEMO_SCENARIOS.hospital;
+  const handleBackToHome = () => {
+    setForceUncertain(false);
+    setPreferredSign(undefined);
+    setCurrentScreen('home');
   };
 
-  // Render active screen inside the phone frame
-  const renderScreenContent = () => {
-    switch (currentScreen) {
-      case 'intro':
-        return <Intro onStart={handleStartExperience} />;
+  // Add recognized sign / spoken text into live conversation
+  const handleAddToConversation = (text: string) => {
+    handleAddMessage(currentScreen === 'sign' ? 'signer' : 'speaker', text);
+    setCurrentScreen('conversation');
+  };
 
-      case 'home':
-        return (
-          <>
-            <Header onSettings={handleOpenSettings} />
-            <Home
-              onStartInterpreting={handleStartInterpreting}
-              onTryDemo={handleTryDemo}
-            />
-          </>
-        );
+  // Desktop shortcuts
+  const handleDesktopSelectDemoSign = (signKey: string) => {
+    handleSelectSign(signKey);
+  };
 
-      case 'mode_selection':
-        return (
-          <>
-            <Header
-              title="CHANNELS"
-              onBack={() => setCurrentScreen('home')}
-              onSettings={handleOpenSettings}
-            />
-            <ModeSelection
-              onSelectSignToSpeech={handleSelectSignToSpeech}
-              onSelectSpeechToText={handleSelectSpeechToText}
-            />
-          </>
-        );
+  const handleDesktopTriggerUncertain = () => {
+    setForceUncertain(true);
+    setCurrentScreen('sign');
+  };
 
-      case 'demo_mode':
-        return (
-          <>
-            <Header
-              title="SCENARIOS"
-              onBack={() => setCurrentScreen('mode_selection')}
-              onSettings={handleOpenSettings}
-            />
-            <DemoMode onSelectScenario={handleSelectScenario} />
-          </>
-        );
+  const handleDesktopResetDemo = () => {
+    setMessages(INITIAL_MESSAGES);
+    setForceUncertain(false);
+    setPreferredSign(undefined);
+    setCurrentScreen('home');
+  };
 
-      case 'interpreter':
-        return (
-          <>
-            <Header
-              title="INTERPRETER"
-              scenarioName={getActiveScenario().title}
-              onBack={() => setCurrentScreen('demo_mode')}
-              onSettings={handleOpenSettings}
-            />
-            <Interpreter
-              scenarioId={activeScenarioId}
-              collectedSigns={collectedSigns}
-              onAddSignToSentence={handleAddSignToSentence}
-              onCompleteSentence={handleCompleteSentence}
-              onTriggerUncertainState={() => setCurrentScreen('uncertain')}
-            />
-          </>
-        );
+  const handleDesktopNavigateTab = (tab: NavTab) => {
+    setCurrentScreen(tab);
+  };
 
-      case 'sentence_builder':
-        return (
-          <>
-            <Header
-              title="BUILDER"
-              scenarioName={getActiveScenario().title}
-              onBack={() => setCurrentScreen('interpreter')}
-              onSettings={handleOpenSettings}
-            />
-            <SentenceBuilder
-              scenarioId={activeScenarioId}
-              collectedSigns={collectedSigns}
-              onAddMoreSigns={() => setCurrentScreen('interpreter')}
-              onClearSigns={() => setCollectedSigns([])}
-              onSpeakMessage={handleSpeakMessage}
-            />
-          </>
-        );
+  // Current active bottom nav tab
+  const getActiveTab = (): NavTab => {
+    if (currentScreen === 'home') return 'home';
+    if (currentScreen === 'sign') return 'sign';
+    if (currentScreen === 'conversation') return 'conversation';
+    if (currentScreen === 'help') return 'help';
+    return 'home';
+  };
 
-      case 'speech_output':
-        return (
-          <>
-            <Header
-              title="SPEECH"
-              scenarioName={getActiveScenario().title}
-              onBack={() => setCurrentScreen('sentence_builder')}
-              onSettings={handleOpenSettings}
-            />
-            <SpeechOutput
-              messageText={finalDeliveredMessage}
-              onFinishDelivery={handleFinishDelivery}
-            />
-          </>
-        );
-
-      case 'speech_to_text':
-        return (
-          <>
-            <Header
-              title="SPEECH → TEXT"
-              onBack={() => setCurrentScreen('mode_selection')}
-              onSettings={handleOpenSettings}
-            />
-            <SpeechToText onBackToHome={handleBackToHome} />
-          </>
-        );
-
-      case 'uncertain':
-        return (
-          <>
-            <Header
-              title="SAFETY GATE"
-              onBack={() => setCurrentScreen('interpreter')}
-              onSettings={handleOpenSettings}
-            />
-            <UncertainState
-              signName={getActiveScenario().lowConfidenceSign?.sign || 'WATER'}
-              confidence={getActiveScenario().lowConfidenceSign?.confidence || 58}
-              onTryAgain={() => setCurrentScreen('interpreter')}
-              onContinueAnyway={() => {
-                handleAddSignToSentence(getActiveScenario().lowConfidenceSign?.sign || 'WATER');
-                setCurrentScreen('sentence_builder');
-              }}
-            />
-          </>
-        );
-
-      case 'success':
-        return (
-          <>
-            <Header onSettings={handleOpenSettings} />
-            <Success
-              deliveredMessage={finalDeliveredMessage}
-              onStartAgain={handleStartAgain}
-              onBackToHome={handleBackToHome}
-            />
-          </>
-        );
-
-      case 'settings':
-        return <Settings onBack={() => setCurrentScreen('home')} />;
-
-      default:
-        return <Home onStartInterpreting={handleStartInterpreting} onTryDemo={handleTryDemo} />;
+  const handleSelectTab = (tab: NavTab) => {
+    if (tab === 'sign') {
+      handleSelectSign();
+    } else {
+      setCurrentScreen(tab);
     }
   };
 
+  // Render Screen Content inside the phone frame
+  const renderScreenContent = () => {
+    switch (currentScreen) {
+      case 'home':
+        return (
+          <Home
+            onSelectSign={() => handleSelectSign()}
+            onSelectSpeak={handleSelectSpeak}
+            onSelectConversation={handleSelectConversation}
+            onSelectHelp={handleSelectHelp}
+            onSettings={handleOpenSettings}
+          />
+        );
+
+      case 'sign':
+        return (
+          <SignMode
+            onBack={handleBackToHome}
+            onAddToConversation={handleAddToConversation}
+            preferredSign={preferredSign}
+            forceUncertain={forceUncertain}
+          />
+        );
+
+      case 'speak':
+        return (
+          <SpeakMode
+            onBack={handleBackToHome}
+            onAddToConversation={handleAddToConversation}
+          />
+        );
+
+      case 'conversation':
+        return (
+          <ConversationMode
+            messages={messages}
+            onAddMessage={handleAddMessage}
+            onClearConversation={handleClearConversation}
+          />
+        );
+
+      case 'help':
+        return <HelpMode onBack={handleBackToHome} />;
+
+      case 'settings':
+        return <Settings onBack={handleBackToHome} />;
+
+      default:
+        return (
+          <Home
+            onSelectSign={() => handleSelectSign()}
+            onSelectSpeak={handleSelectSpeak}
+            onSelectConversation={handleSelectConversation}
+            onSelectHelp={handleSelectHelp}
+          />
+        );
+    }
+  };
+
+  const showBottomNav =
+    currentScreen === 'home' ||
+    currentScreen === 'sign' ||
+    currentScreen === 'conversation' ||
+    currentScreen === 'help';
+
   return (
     <DesktopEditorialLayout
-      activeScenarioId={activeScenarioId}
-      onSelectScenarioShortcut={handleSelectScenarioShortcut}
-      onTriggerUncertainShortcut={handleTriggerUncertainShortcut}
-      onResetFlow={handleResetFlow}
-      currentScreenName={currentScreen.toUpperCase()}
+      activeScreen={currentScreen.toUpperCase()}
+      onNavigateTab={handleDesktopNavigateTab}
+      onSelectDemoSign={handleDesktopSelectDemoSign}
+      onTriggerUncertain={handleDesktopTriggerUncertain}
+      onResetDemo={handleDesktopResetDemo}
     >
       <PhoneFrame>
-        {renderScreenContent()}
+        <div className="flex-1 w-full flex flex-col justify-between overflow-hidden bg-black text-white">
+          {renderScreenContent()}
+          {showBottomNav && (
+            <BottomNav activeTab={getActiveTab()} onSelectTab={handleSelectTab} />
+          )}
+        </div>
       </PhoneFrame>
     </DesktopEditorialLayout>
   );

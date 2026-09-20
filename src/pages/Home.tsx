@@ -1,115 +1,201 @@
-import React from 'react';
-import { ArrowRight, Camera, Sparkles } from 'lucide-react';
-import { TechLabel, CornerBrackets, YellowCornerBracket } from '../components/TechnicalDecoration';
+import React, { useState } from 'react';
+import { ArrowRight, MessageSquare, HelpCircle, Settings, X, Sparkles } from 'lucide-react';
+import { ArchitecturePipeline } from '../components/ArchitecturePipeline';
 
 interface HomeProps {
-  onStartInterpreting: () => void;
-  onTryDemo: () => void;
+  onSelectSign: () => void;
+  onSelectSpeak: () => void;
+  onSelectConversation: () => void;
+  onSelectHelp: () => void;
+  onSettings?: () => void;
 }
 
-export const Home: React.FC<HomeProps> = ({ onStartInterpreting, onTryDemo }) => {
+export const Home: React.FC<HomeProps> = ({
+  onSelectSign,
+  onSelectSpeak,
+  onSelectConversation,
+  onSelectHelp,
+  onSettings,
+}) => {
+  const [isArchitectureModalOpen, setIsArchitectureModalOpen] = useState<boolean>(false);
+
   return (
-    <div className="flex-1 w-full bg-black text-white flex flex-col justify-between p-5 select-none relative">
+    <div className="flex-1 w-full bg-black text-white flex flex-col justify-between p-5 select-none relative overflow-y-auto">
+      {/* Subtle Ambient Background Grid */}
       <div className="absolute inset-0 bg-grid-tech opacity-20 pointer-events-none" />
 
-      {/* Top Status Header */}
-      <div className="relative z-10 flex items-center justify-between border-b border-neutral-800 pb-2.5">
+      {/* Top Header Status */}
+      <div className="relative z-10 flex items-center justify-between pb-3 border-b border-neutral-900">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-brand-gold flex items-center justify-center text-black font-mono font-black text-sm shadow-[0_0_12px_rgba(255,208,0,0.4)]">
+            S
+          </div>
+          <div>
+            <span className="font-sans font-black tracking-wider text-base text-white leading-none uppercase">
+              SIGNIFY
+            </span>
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-brand-yellow flex items-center justify-center">
-            <span className="font-display text-black text-xs font-black">S</span>
+          <div className="flex items-center gap-1.5 font-mono text-[10px] px-2.5 py-0.5 bg-neutral-900 text-brand-gold border border-brand-gold/60 rounded-full font-bold shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
+            <span>AI READY</span>
           </div>
-          <span className="font-display font-black tracking-wider text-base text-white">
-            SIGNIFY
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 font-mono text-[10px] px-2 py-0.5 bg-neutral-900 border border-brand-yellow/50 text-brand-yellow font-bold">
-          <span className="w-1.5 h-1.5 rounded-full bg-brand-yellow animate-pulse" />
-          <span>AI READY</span>
+
+          {onSettings && (
+            <button
+              onClick={onSettings}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-black hover:bg-brand-gold transition-colors"
+              title="Settings"
+              aria-label="Settings"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main Hero Card */}
-      <div className="relative z-10 my-auto py-2">
-        <div className="border border-neutral-800 p-5 bg-neutral-950 relative shadow-lg">
-          <CornerBrackets size="w-3 h-3" />
-          <YellowCornerBracket position="top-right" />
-
-          <div className="flex items-center gap-2 mb-2">
-            <TechLabel number="01" text="HANDS TO VOICE" yellowDot />
+      {/* Hero Section */}
+      <div className="relative z-10 my-auto py-3 space-y-4">
+        <div>
+          <div className="font-mono text-[10px] font-bold text-brand-gold tracking-widest uppercase mb-1 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3 text-brand-gold fill-brand-gold" />
+            <span>TWO-WAY AI COMMUNICATION</span>
           </div>
-
-          <h1 className="font-display font-black text-4xl sm:text-5xl leading-[0.92] text-white uppercase tracking-tight mb-3">
-            SPEAK<br />
-            WITH YOUR<br />
-            <span className="bg-brand-yellow text-black px-1 inline-block">HANDS.</span>
+          <h1 className="font-sans font-black text-3xl sm:text-4xl text-white tracking-tight leading-[1.05] uppercase">
+            Turn signs into<br />
+            <span className="text-brand-gold">conversations.</span>
           </h1>
-
-          <p className="font-sans text-xs sm:text-sm text-neutral-300 leading-relaxed mb-4">
-            Turn sign language into natural communication, directly from your phone.
+          <p className="font-sans text-xs text-neutral-400 mt-1.5 leading-relaxed">
+            Communicate naturally with sign language, text and speech.
           </p>
-
-          {/* Camera / Hand Concept Visual Preview */}
-          <div className="relative h-28 w-full bg-black border border-neutral-800 p-2 flex items-center justify-between overflow-hidden">
-            <div className="absolute inset-0 bg-dots-tech opacity-20 pointer-events-none" />
-            
-            <div className="relative z-10 flex items-center gap-3">
-              <div className="w-12 h-12 bg-neutral-900 border border-brand-yellow/60 flex items-center justify-center text-xl">
-                ✋
-              </div>
-              <div className="font-mono text-[10px] text-white">
-                <div className="text-brand-yellow font-bold flex items-center gap-1">
-                  <Camera className="w-3 h-3" /> iQOO 15 VISION
-                </div>
-                <div className="text-neutral-400 text-[9px]">21-POINT SKELETON DETECT</div>
-                <div className="text-[9px] text-brand-yellow font-semibold">CONFIDENCE GATED</div>
-              </div>
-            </div>
-
-            <div className="relative z-10 flex flex-col items-end font-mono text-[9px] text-brand-yellow">
-              <span className="px-1.5 py-0.5 bg-neutral-900 border border-brand-yellow/40">1080P // 60FPS</span>
-              <span className="text-neutral-300 mt-1">NPU ACCELERATED</span>
-            </div>
-          </div>
         </div>
 
-        {/* Technical Badges Row */}
-        <div className="grid grid-cols-3 gap-1.5 mt-3">
-          <div className="p-1.5 border border-neutral-800 bg-neutral-900 font-mono text-[9px] text-center">
-            <span className="text-black bg-brand-yellow px-1 font-bold">1</span>
-            <div className="font-bold text-neutral-200 mt-0.5">PHONE-FIRST</div>
-          </div>
-          <div className="p-1.5 border border-neutral-800 bg-neutral-900 font-mono text-[9px] text-center">
-            <span className="text-black bg-brand-yellow px-1 font-bold">2</span>
-            <div className="font-bold text-neutral-200 mt-0.5">AI ASSISTED</div>
-          </div>
-          <div className="p-1.5 border border-neutral-800 bg-neutral-900 font-mono text-[9px] text-center">
-            <span className="text-black bg-brand-yellow px-1 font-bold">3</span>
-            <div className="font-bold text-neutral-200 mt-0.5">PRIVACY-FIRST</div>
-          </div>
+        {/* TWO DOMINANT ACTION CARDS */}
+        <div className="space-y-3">
+          {/* CARD 1: SIGN */}
+          <button
+            onClick={onSelectSign}
+            className="w-full text-left p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-brand-gold/50 hover:border-brand-gold hover:shadow-[0_0_20px_rgba(255,208,0,0.25)] transition-all active:scale-[0.99] group relative overflow-hidden"
+          >
+            {/* Corner Bracket Accents */}
+            <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-brand-gold" />
+            <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-brand-gold" />
+
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-3xl sm:text-4xl">🤟</div>
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/40 font-bold uppercase">
+                FORWARD
+              </span>
+            </div>
+
+            <h2 className="font-sans font-black text-2xl text-white tracking-wide uppercase">
+              SIGN
+            </h2>
+            <p className="font-mono text-xs text-neutral-400 mt-0.5">
+              Gesture → Voice
+            </p>
+
+            <div className="mt-3.5 pt-2.5 border-t border-neutral-900 flex items-center justify-between">
+              <span className="font-mono font-bold text-xs text-brand-gold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span>START SIGNING</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+              <span className="font-mono text-[9px] text-neutral-500">CAMERA VISION</span>
+            </div>
+          </button>
+
+          {/* CARD 2: SPEAK */}
+          <button
+            onClick={onSelectSpeak}
+            className="w-full text-left p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-brand-gold/50 hover:border-brand-gold hover:shadow-[0_0_20px_rgba(255,208,0,0.25)] transition-all active:scale-[0.99] group relative overflow-hidden"
+          >
+            {/* Corner Bracket Accents */}
+            <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-brand-gold" />
+            <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-brand-gold" />
+
+            <div className="flex items-start justify-between mb-2">
+              <div className="text-3xl sm:text-4xl">🎤</div>
+              <span className="font-mono text-[9px] px-2 py-0.5 rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/40 font-bold uppercase">
+                REVERSE
+              </span>
+            </div>
+
+            <h2 className="font-sans font-black text-2xl text-white tracking-wide uppercase">
+              SPEAK
+            </h2>
+            <p className="font-mono text-xs text-neutral-400 mt-0.5">
+              Voice → Text
+            </p>
+
+            <div className="mt-3.5 pt-2.5 border-t border-neutral-900 flex items-center justify-between">
+              <span className="font-mono font-bold text-xs text-brand-gold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span>START SPEAKING</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+              <span className="font-mono text-[9px] text-neutral-500">VOICE RECOGNITION</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Compact Visual Architecture Pipeline */}
+        <div className="pt-1">
+          <ArchitecturePipeline
+            compact={true}
+            onOpenFullModal={() => setIsArchitectureModalOpen(true)}
+          />
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="relative z-10 space-y-2 pt-2">
+      {/* Bottom Secondary Action Entries */}
+      <div className="relative z-10 pt-2 space-y-2">
         <button
-          onClick={onStartInterpreting}
-          className="w-full group bg-brand-yellow hover:bg-yellow-400 text-black font-display text-lg tracking-wider py-3.5 px-5 flex items-center justify-between border-2 border-brand-yellow transition-all shadow-card-sharp active:translate-x-0.5 active:translate-y-0.5"
+          onClick={onSelectConversation}
+          className="w-full py-3 px-4 rounded-xl bg-brand-gold hover:bg-yellow-400 text-black font-mono font-black text-xs uppercase tracking-wider flex items-center justify-between transition-all shadow-[0_0_15px_rgba(255,208,0,0.3)] active:translate-x-0.5 active:translate-y-0.5"
         >
-          <span className="flex items-center gap-2 font-black">
-            <Sparkles className="w-4 h-4 text-black fill-black" />
-            START INTERPRETING
+          <span className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-black" />
+            <span>LIVE CONVERSATION MODE</span>
           </span>
-          <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="w-4 h-4 text-black" />
         </button>
 
         <button
-          onClick={onTryDemo}
-          className="w-full group bg-neutral-900 hover:bg-neutral-800 text-white font-mono font-bold text-xs tracking-wider py-3 px-5 flex items-center justify-between border border-neutral-700 transition-all active:translate-x-0.5 active:translate-y-0.5"
+          onClick={onSelectHelp}
+          className="w-full py-1.5 px-3 rounded-lg text-neutral-400 hover:text-white font-mono text-[10px] font-bold flex items-center justify-center gap-1.5 transition-colors"
         >
-          <span>TRY DEMO SCENARIOS</span>
-          <span className="text-brand-yellow group-hover:translate-x-0.5 transition-transform">→</span>
+          <HelpCircle className="w-3 h-3 text-brand-gold" />
+          <span>URGENT SITUATIONS? <strong className="text-brand-gold underline ml-1">🆘 QUICK HELP</strong></span>
         </button>
       </div>
+
+      {/* Full Architecture Modal */}
+      {isArchitectureModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg max-h-[90vh] bg-neutral-950 border border-brand-gold/60 rounded-3xl p-5 overflow-y-auto shadow-2xl relative">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-800 mb-4">
+              <div>
+                <div className="font-mono text-[10px] text-brand-gold font-bold uppercase">
+                  SYSTEM ARCHITECTURE
+                </div>
+                <h2 className="font-sans font-black text-lg text-white uppercase">
+                  How Signify Works
+                </h2>
+              </div>
+              <button
+                onClick={() => setIsArchitectureModalOpen(false)}
+                className="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-700 text-neutral-400 hover:text-black hover:bg-brand-gold flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <ArchitecturePipeline compact={false} />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
