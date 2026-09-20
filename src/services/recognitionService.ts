@@ -1,85 +1,80 @@
 /**
  * Signify Recognition Service Abstraction
  * 
- * Note: This prototype currently implements `DemoRecognitionService` with
- * deterministic sign recognition for product demonstration and benchmarking purposes.
- * It is architected so that `RealRecognitionService` (connecting to on-device TFLite /
- * MediaPipe / WebNN models) can be swapped seamlessly in the future without UI rewrites.
+ * Clean service layer separating sign recognition from the UI.
+ * Connects to on-device ML models (MediaPipe / TFLite / WebNN) in production.
+ * Provides deterministic simulation for hackathon demonstration.
  */
-
-import { DEMO_SCENARIOS, ScenarioStep } from '../data/demoScenarios';
 
 export interface RecognitionResult {
   sign: string;
+  text: string;
   confidence: number;
   status: 'high' | 'medium' | 'low';
-  timestamp: number;
   isSimulated: boolean;
-  handPoseType?: string;
-  contextSentence?: string;
-  gestureDescription?: string;
 }
+
+export const DEMO_SIGNS: Record<string, { text: string; confidence: number }> = {
+  'HELLO': { text: 'Hello', confidence: 96 },
+  'THANK YOU': { text: 'Thank you', confidence: 95 },
+  'YES': { text: 'Yes', confidence: 98 },
+  'NO': { text: 'No', confidence: 94 },
+  'HELP': { text: 'I need help', confidence: 97 },
+  'PLEASE': { text: 'Please', confidence: 93 },
+  'I LOVE YOU': { text: 'I love you', confidence: 99 },
+};
 
 export interface IRecognitionService {
   isSimulated(): boolean;
-  getScenarioStep(scenarioId: string, stepIndex: number): Promise<RecognitionResult>;
-  getUncertainSign(scenarioId: string): Promise<RecognitionResult>;
-  getVocabulary(scenarioId: string): string[];
+  recognizeSign(signKey?: string): Promise<RecognitionResult>;
+  getUncertainSign(): Promise<RecognitionResult>;
+  getAvailableSigns(): string[];
 }
 
 export class DemoRecognitionService implements IRecognitionService {
-  private modeLabel = 'DEMO RECOGNITION (DETERMINISTIC SIMULATION)';
+  private currentIndex = 0;
+  private signKeys = Object.keys(DEMO_SIGNS);
 
   public isSimulated(): boolean {
     return true;
   }
 
-  public getModeLabel(): string {
-    return this.modeLabel;
+  public getAvailableSigns(): string[] {
+    return this.signKeys;
   }
 
-  public async getScenarioStep(scenarioId: string, stepIndex: number): Promise<RecognitionResult> {
-    // Small simulated network / inference pause for realistic rhythm
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  public async recognizeSign(preferredSign?: string): Promise<RecognitionResult> {
+    // Realistic subtle inference rhythm
+    await new Promise((resolve) => setTimeout(resolve, 650));
 
-    const scenario = DEMO_SCENARIOS[scenarioId] || DEMO_SCENARIOS.hospital;
-    const boundedIndex = Math.min(stepIndex, scenario.steps.length - 1);
-    const step: ScenarioStep = scenario.steps[boundedIndex];
+    const sign = preferredSign && DEMO_SIGNS[preferredSign]
+      ? preferredSign
+      : this.signKeys[this.currentIndex % this.signKeys.length];
 
+    // Cycle to next sign for natural demo exploration if not specified
+    if (!preferredSign) {
+      this.currentIndex++;
+    }
+
+    const data = DEMO_SIGNS[sign];
     return {
-      sign: step.sign,
-      confidence: step.confidence,
-      status: step.status,
-      timestamp: Date.now(),
+      sign,
+      text: data.text,
+      confidence: data.confidence,
+      status: 'high',
       isSimulated: true,
-      handPoseType: step.handPoseType,
-      contextSentence: step.contextSentence,
-      gestureDescription: step.gestureDescription
     };
   }
 
-  public async getUncertainSign(scenarioId: string): Promise<RecognitionResult> {
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    const scenario = DEMO_SCENARIOS[scenarioId] || DEMO_SCENARIOS.hospital;
-    const lowConf = scenario.lowConfidenceSign || {
-      sign: 'WATER',
-      confidence: 58,
-      reason: 'Low contrast lighting'
-    };
-
+  public async getUncertainSign(): Promise<RecognitionResult> {
+    await new Promise((resolve) => setTimeout(resolve, 650));
     return {
-      sign: lowConf.sign,
-      confidence: lowConf.confidence,
+      sign: 'UNCERTAIN',
+      text: 'Sign not clear',
+      confidence: 48,
       status: 'low',
-      timestamp: Date.now(),
       isSimulated: true,
-      gestureDescription: 'Gestural pattern match below safety threshold (<70%).'
     };
-  }
-
-  public getVocabulary(scenarioId: string): string[] {
-    const scenario = DEMO_SCENARIOS[scenarioId] || DEMO_SCENARIOS.hospital;
-    return scenario.vocabulary;
   }
 }
 

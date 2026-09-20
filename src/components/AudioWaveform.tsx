@@ -35,8 +35,8 @@ export const AudioWaveform: React.FC<AudioWaveformProps> = ({
           className={`w-1.5 rounded-none transition-all ${
             isActive
               ? mode === 'speech'
-                ? 'bg-brand-yellow'
-                : 'bg-white'
+                ? 'bg-brand-gold'
+                : 'bg-brand-gold-light'
               : 'bg-neutral-800'
           }`}
           style={{
