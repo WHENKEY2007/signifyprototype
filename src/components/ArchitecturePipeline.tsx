@@ -10,14 +10,49 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({
   compact = true,
   onOpenFullModal,
 }) => {
-  const forwardNodes = [
-    { icon: '🤟', label: 'GESTURE', detail: 'Sign language input' },
+  // 5-Step Core Innovation
+  const fiveSteps = [
+    {
+      num: '1',
+      title: 'SIGN',
+      desc: 'User performs a sign.',
+      icon: '🤟',
+    },
+    {
+      num: '2',
+      title: 'WORD',
+      desc: 'AI recognizes the sign as a word.',
+      icon: '✋',
+    },
+    {
+      num: '3',
+      title: 'CONTEXT',
+      desc: 'Detected words are combined.',
+      icon: '🧠',
+    },
+    {
+      num: '4',
+      title: 'SENTENCE',
+      desc: 'Signify creates a natural phrase.',
+      icon: '💬',
+    },
+    {
+      num: '5',
+      title: 'VOICE',
+      desc: 'The phrase is spoken aloud.',
+      icon: '🔊',
+    },
+  ];
+
+  const forwardDetailedNodes = [
+    { icon: '🤟', label: 'SIGN', detail: 'User performs a sign gesture' },
     { icon: '📷', label: 'CAMERA', detail: 'Optical vision ingest' },
-    { icon: '✋', label: 'TRACKING', detail: '21-point hand keypoints' },
-    { icon: '🧠', label: 'RECOGNITION', detail: 'Neural gesture inference' },
-    { icon: '✓', label: 'CONFIDENCE', detail: 'Safety gate (≥75%)' },
-    { icon: '📝', label: 'CONTEXT', detail: 'Natural grammar builder' },
-    { icon: '💬', label: 'PHRASE', detail: 'Complete phrase' },
+    { icon: '✋', label: 'KEYPOINTS', detail: '21-point hand tracking' },
+    { icon: '🧠', label: 'WORD RECOG', detail: 'On-device neural sign prediction' },
+    { icon: '✓', label: 'CONFIDENCE', detail: 'Safety threshold gate (≥75%)' },
+    { icon: '📝', label: 'WORD BUFFER', detail: 'Accumulates accepted words' },
+    { icon: '🧠', label: 'CONTEXT', detail: 'Contextual sentence synthesis' },
+    { icon: '💬', label: 'SENTENCE', detail: 'Grounded natural phrase' },
     { icon: '🔊', label: 'VOICE', detail: 'Speech synthesis' },
   ];
 
@@ -31,8 +66,8 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({
 
   if (compact) {
     return (
-      <div className="p-3.5 rounded-2xl bg-brand-card border border-brand-border select-none">
-        <div className="flex items-center justify-between mb-2.5">
+      <div className="p-3.5 rounded-2xl bg-neutral-950 border border-brand-gold/40 select-none">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5 font-mono text-[10px] text-brand-gold font-bold uppercase tracking-wider">
             <Sparkles className="w-3 h-3 text-brand-gold fill-brand-gold" />
             <span>HOW SIGNIFY WORKS</span>
@@ -42,51 +77,29 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({
               onClick={onOpenFullModal}
               className="text-[10px] font-mono font-bold text-brand-gold hover:underline flex items-center gap-0.5"
             >
-              <span>EXPLORE ARCHITECTURE</span>
+              <span>EXPLORE</span>
               <ChevronRight className="w-3 h-3" />
             </button>
           )}
         </div>
 
-        {/* FORWARD PIPELINE PREVIEW */}
-        <div className="space-y-2">
-          <div className="text-[9px] font-mono text-slate-400 font-semibold uppercase">
-            FORWARD: GESTURE → VOICE
-          </div>
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-mono font-bold scrollbar-none">
-            {forwardNodes.slice(0, 5).map((node, i) => (
-              <React.Fragment key={node.label}>
-                <div className="px-2 py-1 rounded-lg bg-brand-dark border border-brand-border flex items-center gap-1 whitespace-nowrap text-slate-200">
-                  <span>{node.icon}</span>
-                  <span>{node.label}</span>
-                </div>
-                {i < 4 && <span className="text-brand-gold">→</span>}
-              </React.Fragment>
-            ))}
-            <span className="text-brand-gold">→</span>
-            <div className="px-2 py-1 rounded-lg bg-brand-gold/15 border border-brand-gold text-brand-gold font-black flex items-center gap-1 whitespace-nowrap">
-              <span>🔊</span>
-              <span>VOICE</span>
-            </div>
-          </div>
+        {/* 5-Step Innovation Flow */}
+        <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1 text-[10px] font-mono font-bold scrollbar-none">
+          {fiveSteps.map((step, idx) => (
+            <React.Fragment key={step.title}>
+              <div className="px-2 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center gap-1.5 whitespace-nowrap text-white">
+                <span className="text-xs">{step.icon}</span>
+                <span>{step.title}</span>
+              </div>
+              {idx < fiveSteps.length - 1 && (
+                <span className="text-brand-gold text-xs">→</span>
+              )}
+            </React.Fragment>
+          ))}
         </div>
 
-        {/* REVERSE PIPELINE PREVIEW */}
-        <div className="space-y-1.5 mt-2.5 pt-2 border-t border-brand-border/60">
-          <div className="text-[9px] font-mono text-slate-400 font-semibold uppercase">
-            REVERSE: VOICE → TEXT
-          </div>
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[10px] font-mono font-bold scrollbar-none">
-            {reverseNodes.map((node, i) => (
-              <React.Fragment key={node.label}>
-                <div className="px-2 py-1 rounded-lg bg-brand-dark border border-brand-border flex items-center gap-1 whitespace-nowrap text-slate-200">
-                  <span>{node.icon}</span>
-                  <span>{node.label}</span>
-                </div>
-                {i < reverseNodes.length - 1 && <span className="text-brand-gold">→</span>}
-              </React.Fragment>
-            ))}
-          </div>
+        <div className="mt-2 text-[9px] font-mono text-neutral-400 text-center">
+          AI-powered sign recognition with contextual sentence formation.
         </div>
       </div>
     );
@@ -94,46 +107,90 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({
 
   // Full Expanded Architecture Modal / Page
   return (
-    <div className="space-y-6 text-slate-200 select-none">
-      {/* FORWARD DIRECTION */}
-      <div className="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-brand-border">
+    <div className="space-y-6 text-neutral-200 select-none">
+      {/* 5-Step Narrative Section */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-neutral-900 border border-brand-gold/60 space-y-4">
+        <div>
+          <div className="font-mono text-[10px] text-brand-gold font-bold uppercase tracking-wider">
+            CORE INNOVATION
+          </div>
+          <h3 className="font-sans font-black text-xl text-white uppercase">
+            How Signify understands your message
+          </h3>
+          <p className="font-sans text-xs text-neutral-400 mt-1">
+            AI-powered sign recognition with contextual sentence formation.
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {fiveSteps.map((step, idx) => (
+            <div
+              key={step.title}
+              className="p-3 rounded-xl bg-black border border-neutral-800 hover:border-brand-gold/60 transition-all flex items-start gap-3 relative group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-brand-gold text-black flex items-center justify-center font-mono font-black text-sm flex-shrink-0">
+                {step.num}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{step.icon}</span>
+                  <h4 className="font-mono font-black text-sm text-white uppercase">
+                    {step.title}
+                  </h4>
+                </div>
+                <p className="font-sans text-xs text-neutral-300 mt-0.5">
+                  {step.desc}
+                </p>
+              </div>
+              {idx < fiveSteps.length - 1 && (
+                <div className="absolute -bottom-2.5 left-7 transform -translate-x-1/2 text-brand-gold text-xs z-10">
+                  ↓
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Detailed Pipeline Breakdown */}
+      <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
           <div className="flex items-center gap-2">
             <span className="text-xl">🤟</span>
             <div>
               <div className="font-mono text-xs font-bold text-brand-gold uppercase tracking-wider">
-                FORWARD PIPELINE
+                DETAILED PIPELINE
               </div>
               <div className="font-sans text-sm font-extrabold text-white">
-                GESTURE → VOICE
+                SIGN → WORD → CONTEXT → VOICE
               </div>
             </div>
           </div>
-          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-gold/10 text-brand-gold border border-brand-gold/30 font-bold">
-            REAL-TIME
+          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/40 font-bold">
+            ON-DEVICE
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-          {forwardNodes.map((node, idx) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+          {forwardDetailedNodes.map((node, idx) => (
             <div
               key={node.label}
-              className="p-2.5 rounded-xl bg-brand-dark border border-brand-border hover:border-brand-gold/50 transition-colors relative"
+              className="p-2.5 rounded-xl bg-black border border-neutral-800 hover:border-brand-gold/50 transition-colors"
             >
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-base">{node.icon}</span>
                 <span className="font-mono text-[9px] text-brand-gold font-bold">0{idx + 1}</span>
               </div>
               <div className="font-mono text-[11px] font-black text-white">{node.label}</div>
-              <div className="font-sans text-[10px] text-slate-400 mt-0.5 leading-snug">{node.detail}</div>
+              <div className="font-sans text-[10px] text-neutral-400 mt-0.5 leading-snug">{node.detail}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* REVERSE DIRECTION */}
-      <div className="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-brand-border">
+      {/* Reverse Direction (Voice -> Text) */}
+      <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎤</span>
             <div>
@@ -145,8 +202,8 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({
               </div>
             </div>
           </div>
-          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-gold/10 text-brand-gold border border-brand-gold/30 font-bold">
-            ZERO LATENCY
+          <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-brand-gold/15 text-brand-gold border border-brand-gold/40 font-bold">
+            TWO-WAY
           </span>
         </div>
 
@@ -154,21 +211,21 @@ export const ArchitecturePipeline: React.FC<ArchitecturePipelineProps> = ({
           {reverseNodes.map((node, idx) => (
             <div
               key={node.label}
-              className="p-2.5 rounded-xl bg-brand-dark border border-brand-border hover:border-brand-gold/50 transition-colors relative"
+              className="p-2.5 rounded-xl bg-black border border-neutral-800 hover:border-brand-gold/50 transition-colors"
             >
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-base">{node.icon}</span>
                 <span className="font-mono text-[9px] text-brand-gold font-bold">0{idx + 1}</span>
               </div>
               <div className="font-mono text-[11px] font-black text-white">{node.label}</div>
-              <div className="font-sans text-[10px] text-slate-400 mt-0.5 leading-snug">{node.detail}</div>
+              <div className="font-sans text-[10px] text-neutral-400 mt-0.5 leading-snug">{node.detail}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="p-3 bg-brand-dark rounded-xl border border-brand-border text-center text-xs text-slate-400 font-sans">
-        Signify bridges both communication directions on-device without cloud latency.
+      <div className="p-3 bg-neutral-950 rounded-xl border border-neutral-800 text-center text-xs text-neutral-400 font-sans">
+        Signify bridges sign language and spoken conversation with clear separation between word recognition and contextual sentence formation.
       </div>
     </div>
   );
