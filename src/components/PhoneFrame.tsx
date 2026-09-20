@@ -6,6 +6,7 @@ interface PhoneFrameProps {
 
 export const PhoneFrame: React.FC<PhoneFrameProps> = ({ children }) => {
   const [currentTime, setCurrentTime] = useState<string>('15:58');
+  const [activeHaptic, setActiveHaptic] = useState<{ type: string; label: string } | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -19,12 +20,45 @@ export const PhoneFrame: React.FC<PhoneFrameProps> = ({ children }) => {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const handleHaptic = (e: any) => {
+      if (e.detail) {
+        setActiveHaptic({
+          type: e.detail.type,
+          label: e.detail.label
+        });
+        const t = setTimeout(() => {
+          setActiveHaptic(null);
+        }, 1400);
+        return () => clearTimeout(t);
+      }
+    };
+
+    window.addEventListener('signify-haptic', handleHaptic);
+    return () => window.removeEventListener('signify-haptic', handleHaptic);
+  }, []);
+
   return (
     <div className="w-full flex justify-center items-center relative py-2 md:py-6">
       {/* Mobile: 100% viewport | Desktop: Centered flagship phone chassis */}
-      <div className="w-full md:w-[400px] md:h-[844px] flex-shrink-0 transition-all">
-        {/* Outer Phone Shell */}
-        <div className="w-full h-full min-h-screen md:min-h-0 bg-black md:p-[10px] md:rounded-[48px] md:shadow-2xl md:border-2 md:border-neutral-800 relative flex flex-col overflow-hidden">
+      <div className="w-full md:w-[400px] md:h-[844px] flex-shrink-0 transition-all relative">
+        
+        {/* Floating Haptic Indicator Pill (Shows tactile sensation in real-time) */}
+        {activeHaptic && (
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-neutral-900 border border-brand-gold shadow-[0_0_15px_rgba(255,208,0,0.5)] font-mono text-[9.5px] font-bold text-brand-gold animate-bounce">
+            <span>📳</span>
+            <span>HAPTIC: {activeHaptic.label}</span>
+          </div>
+        )}
+
+        {/* Outer Phone Shell with Dynamic Haptic Pulse Glow */}
+        <div
+          className={`w-full h-full min-h-screen md:min-h-0 bg-black md:p-[10px] md:rounded-[48px] md:shadow-2xl md:border-2 transition-all duration-300 relative flex flex-col overflow-hidden ${
+            activeHaptic
+              ? 'md:border-brand-gold md:shadow-[0_0_35px_rgba(255,208,0,0.4)] scale-[1.008]'
+              : 'md:border-neutral-800'
+          }`}
+        >
           
           {/* Inner Phone Screen Display */}
           <div className="relative w-full h-full min-h-screen md:min-h-0 bg-black text-white md:rounded-[38px] overflow-hidden flex flex-col border border-neutral-900">
@@ -46,8 +80,18 @@ export const PhoneFrame: React.FC<PhoneFrameProps> = ({ children }) => {
                 </div>
               </div>
 
-              {/* System Icons: Wi-Fi, Battery */}
+              {/* System Icons: Wi-Fi, Haptic Status, Battery */}
               <div className="flex items-center gap-2 text-neutral-400 font-mono text-xs">
+                {/* Haptic Motor Icon */}
+                <span
+                  title="Haptic Silent Feedback Active"
+                  className={`text-[10px] transition-colors ${
+                    activeHaptic ? 'text-brand-gold animate-ping' : 'text-neutral-500'
+                  }`}
+                >
+                  📳
+                </span>
+
                 {/* Wi-Fi Icon */}
                 <svg className="w-3.5 h-3.5 fill-current text-neutral-300" viewBox="0 0 24 24">
                   <path d="M12 4C7.31 4 3.07 5.9 0 8.98L12 21 24 8.98C20.93 5.9 16.69 4 12 4zm0 3.2c3.7 0 7.07 1.44 9.6 3.82L12 18.59 2.4 11.02C4.93 8.64 8.3 7.2 12 7.2z" />

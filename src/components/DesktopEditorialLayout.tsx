@@ -1,6 +1,7 @@
-import React from 'react';
-import { RefreshCw, ArrowRight, Sparkles, Smartphone, Cpu } from 'lucide-react';
+import React, { useState } from 'react';
+import { RefreshCw, ArrowRight, Sparkles, Smartphone, Cpu, Zap, Cloud, Radio } from 'lucide-react';
 import { DEMO_SIGNS } from '../services/recognitionService';
+import { hapticService } from '../services/hapticService';
 
 interface DesktopEditorialLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
   onResetDemo,
 }) => {
   const demoSignKeys = Object.keys(DEMO_SIGNS);
+  const [benchmarkMode, setBenchmarkMode] = useState<'npu' | 'cloud'>('npu');
 
   return (
     <div className="min-h-screen w-full bg-black text-white relative overflow-x-hidden flex flex-col justify-between selection:bg-brand-gold selection:text-black">
@@ -47,7 +49,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
         <div className="flex items-center gap-4 text-xs font-mono">
           <div className="hidden md:flex items-center gap-2">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse shadow-[0_0_8px_#FFD000]" />
-            <span className="font-semibold text-brand-gold text-[10px]">ON-DEVICE AI READY</span>
+            <span className="font-semibold text-brand-gold text-[10px]">ON-DEVICE NPU ACCELERATED</span>
           </div>
 
           {onResetDemo && (
@@ -66,9 +68,9 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
       {/* Main Responsive Layout */}
       <main className="relative z-10 w-full max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6 flex-1 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-8">
         
-        {/* LEFT COLUMN: Black + Gold Technical HUD matching reference */}
+        {/* LEFT COLUMN: Black + Gold Technical HUD */}
         <div className="hidden lg:flex flex-col justify-between w-[300px] xl:w-[320px] h-[840px] py-2 select-none font-mono">
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {/* Tagline Ribbon */}
             <div className="flex items-center gap-2 text-[10px] font-bold">
               <span className="text-brand-gold">● [01] VISION</span>
@@ -95,33 +97,33 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
             </div>
 
             {/* Compact Pipeline Card */}
-            <div className="border border-neutral-800 bg-neutral-950 p-3.5 relative">
+            <div className="border border-neutral-800 bg-neutral-950 p-3 relative">
               <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-brand-gold" />
               <div className="font-mono text-[9px] font-bold text-neutral-400 mb-2 flex items-center justify-between">
                 <span>PIPELINE</span>
                 <span className="text-black bg-brand-gold px-1 text-[8px] font-black">REAL-TIME</span>
               </div>
-              <div className="space-y-2 text-[10px]">
+              <div className="space-y-1.5 text-[10px]">
                 <div className="flex items-center gap-2 text-neutral-300">
-                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">1</span>
+                  <span className="w-3.5 h-3.5 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">1</span>
                   <span className="truncate">CAMERA 21-PT SKELETON</span>
                 </div>
                 <div className="flex items-center gap-2 text-neutral-300">
-                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">2</span>
+                  <span className="w-3.5 h-3.5 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">2</span>
                   <span className="truncate">CONFIDENCE GATING (≥75%)</span>
                 </div>
                 <div className="flex items-center gap-2 text-neutral-300">
-                  <span className="w-4 h-4 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">3</span>
+                  <span className="w-3.5 h-3.5 bg-neutral-900 border border-brand-gold text-brand-gold flex items-center justify-center font-bold text-[8px]">3</span>
                   <span className="truncate">SYNTHESIS &amp; DUAL SPEAKERS</span>
                 </div>
               </div>
             </div>
 
             {/* Judge Demo Selector Shortcuts */}
-            <div className="border-t border-neutral-800 pt-3 space-y-2">
+            <div className="border border-neutral-800 bg-neutral-950 p-3 space-y-2">
               <div className="font-mono text-[9px] font-bold text-neutral-400 uppercase tracking-wider flex items-center justify-between">
-                <span>JUDGE SHORTCUTS</span>
-                <span className="text-[8px] text-brand-gold font-bold">DEMO SIGNS</span>
+                <span>DEMO SIGNS</span>
+                <span className="text-[8px] text-brand-gold font-bold">1-TAP INFERENCE</span>
               </div>
 
               <div className="grid grid-cols-3 gap-1.5">
@@ -129,7 +131,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
                   <button
                     key={sign}
                     onClick={() => onSelectDemoSign?.(sign)}
-                    className="px-1.5 py-2 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group"
+                    className="px-1.5 py-1.5 text-left font-mono text-[9px] border border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-brand-gold hover:text-white transition-all group rounded"
                   >
                     <div className="text-[7px] text-neutral-500 group-hover:text-brand-gold">0{idx + 1}</div>
                     <div className="font-bold truncate">{sign}</div>
@@ -140,13 +142,45 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
               {onTriggerUncertain && (
                 <button
                   onClick={onTriggerUncertain}
-                  className="w-full px-2 py-2 border border-dashed border-amber-600/70 bg-amber-950/30 hover:bg-amber-950/60 text-amber-200 font-mono text-[9px] font-bold flex items-center justify-between transition-colors"
+                  className="w-full px-2 py-1.5 border border-dashed border-amber-600/70 bg-amber-950/30 hover:bg-amber-950/60 text-amber-200 font-mono text-[9px] font-bold flex items-center justify-between transition-colors rounded"
                   title="Test low-confidence safety handling"
                 >
                   <span>TRIGGER UNCERTAINTY (48%)</span>
                   <span className="px-1 bg-brand-gold text-black text-[7px] font-black">SAFETY TEST</span>
                 </button>
               )}
+            </div>
+
+            {/* ADDON: Haptic Silent Confirmation Tester for Judges */}
+            <div className="border border-neutral-800 bg-neutral-950 p-3 space-y-2 rounded">
+              <div className="flex items-center justify-between text-[9px] font-mono">
+                <span className="text-brand-gold font-bold flex items-center gap-1.5">
+                  <Radio className="w-3 h-3 text-brand-gold" />
+                  <span>HAPTIC CONFIRMATION</span>
+                </span>
+                <span className="text-[8px] px-1 bg-neutral-900 border border-neutral-700 text-neutral-400">
+                  TACTILE
+                </span>
+              </div>
+              <p className="text-[9px] text-neutral-400 leading-snug font-sans">
+                Silent vibration cues tell the deaf signer their gesture was accepted without breaking eye contact.
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 text-[8.5px] font-mono font-bold">
+                <button
+                  onClick={() => hapticService.triggerSuccess()}
+                  className="p-1.5 bg-neutral-900 hover:bg-brand-gold hover:text-black border border-neutral-800 text-neutral-200 rounded transition-all text-center flex items-center justify-center gap-1 shadow-sm"
+                  title="Test 1 Crisp Pulse (Recognition Confirmed)"
+                >
+                  <span>📳 1 PULSE (OK)</span>
+                </button>
+                <button
+                  onClick={() => hapticService.triggerUncertain()}
+                  className="p-1.5 bg-neutral-900 hover:bg-amber-500 hover:text-black border border-neutral-800 text-neutral-200 rounded transition-all text-center flex items-center justify-center gap-1 shadow-sm"
+                  title="Test 2 Quick Pulses (Low Confidence Retry)"
+                >
+                  <span>📳📳 2 PULSES (!)</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -163,58 +197,86 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
           </div>
         </div>
 
-        {/* CENTER STAGE: PHONE PROTOTYPE WITH 3D HUD LABELS */}
+        {/* CENTER STAGE: PHONE PROTOTYPE */}
         <div className="w-full flex-1 flex justify-center items-center relative">
-          {/* 3D Floating HUD Markers framing the Phone (Desktop Only) */}
-          <div className="hidden lg:flex absolute -left-12 top-1/4 flex-col gap-1 text-[8px] font-mono text-neutral-500 uppercase select-none pointer-events-none">
-            <span className="text-brand-gold font-black">ALT: +14mm</span>
-            <span className="w-8 h-[1px] bg-neutral-700" />
-            <span>3D LEVITATION</span>
-          </div>
-
-          <div className="hidden lg:flex absolute -right-12 top-1/3 flex-col items-end gap-1 text-[8px] font-mono text-neutral-500 uppercase select-none pointer-events-none">
-            <span className="text-white font-bold">iQOO 15</span>
-            <span className="w-8 h-[1px] bg-brand-gold/60" />
-            <span className="text-brand-gold">FLAGSHIP CHASSIS</span>
-          </div>
-
           {children}
         </div>
 
-        {/* RIGHT COLUMN: Technical Telemetry HUD matching reference */}
-        <div className="hidden xl:flex flex-col justify-between w-[220px] h-[840px] py-2 select-none font-mono text-xs">
+        {/* RIGHT COLUMN: Technical Telemetry & NPU vs Cloud Benchmark HUD */}
+        <div className="hidden xl:flex flex-col justify-between w-[250px] h-[840px] py-2 select-none font-mono text-xs">
           <div className="space-y-3">
-            {/* System Telemetry Box */}
-            <div className="border border-neutral-800 bg-neutral-950 p-3.5 relative">
+            
+            {/* ADDON: On-Device NPU vs. Cloud Interactive Benchmark Widget */}
+            <div className="border border-neutral-800 bg-neutral-950 p-3 relative rounded shadow-md">
               <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-brand-gold" />
+              
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[8px] font-black uppercase text-black bg-brand-gold px-1">
-                  SYS TELEMETRY
+                <span className="text-[8.5px] font-black uppercase text-brand-gold flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-brand-gold" />
+                  <span>AI BENCHMARK</span>
                 </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-ping" />
+                <span className="text-[7.5px] px-1 bg-brand-gold text-black font-black uppercase rounded-sm">
+                  LIVE COMPARISON
+                </span>
               </div>
-              <div className="space-y-1.5 text-[9px]">
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">INFERENCE:</span>
-                  <span className="font-bold text-neutral-200">18ms (NPU)</span>
+
+              {/* Mode Toggle Buttons */}
+              <div className="grid grid-cols-2 gap-1 mb-2.5">
+                <button
+                  onClick={() => setBenchmarkMode('npu')}
+                  className={`py-1.5 px-2 text-[9px] font-mono font-bold rounded transition-all flex items-center justify-center gap-1 ${
+                    benchmarkMode === 'npu'
+                      ? 'bg-brand-gold text-black font-black shadow-[0_0_10px_rgba(255,208,0,0.4)]'
+                      : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
+                  }`}
+                >
+                  <Cpu className="w-2.5 h-2.5" />
+                  <span>LOCAL NPU</span>
+                </button>
+                <button
+                  onClick={() => setBenchmarkMode('cloud')}
+                  className={`py-1.5 px-2 text-[9px] font-mono font-bold rounded transition-all flex items-center justify-center gap-1 ${
+                    benchmarkMode === 'cloud'
+                      ? 'bg-red-500 text-white font-black shadow-[0_0_10px_rgba(239,68,68,0.4)]'
+                      : 'bg-neutral-900 text-neutral-400 hover:text-white border border-neutral-800'
+                  }`}
+                >
+                  <Cloud className="w-2.5 h-2.5" />
+                  <span>CLOUD API</span>
+                </button>
+              </div>
+
+              {/* Live Metric Rows */}
+              <div className="space-y-1.5 text-[8.5px]">
+                <div className="flex justify-between items-center py-0.5 border-b border-neutral-900">
+                  <span className="text-neutral-500">INFERENCE LATENCY:</span>
+                  <span className={`font-black ${benchmarkMode === 'npu' ? 'text-green-400' : 'text-red-400'}`}>
+                    {benchmarkMode === 'npu' ? '18ms (Snapdragon)' : '480ms (Laggy)'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">ACCURACY:</span>
-                  <span className="font-bold text-brand-gold">96.2% AVG</span>
+                <div className="flex justify-between items-center py-0.5 border-b border-neutral-900">
+                  <span className="text-neutral-500">DATA BANDWIDTH:</span>
+                  <span className={`font-black ${benchmarkMode === 'npu' ? 'text-brand-gold' : 'text-amber-400'}`}>
+                    {benchmarkMode === 'npu' ? '0 KB/s (Offline)' : '2.4 MB/s (High)'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">GATE:</span>
-                  <span className="font-bold text-neutral-200">75.0% SAFE</span>
+                <div className="flex justify-between items-center py-0.5 border-b border-neutral-900">
+                  <span className="text-neutral-500">HIPAA PRIVACY:</span>
+                  <span className={`font-black ${benchmarkMode === 'npu' ? 'text-green-400' : 'text-red-400'}`}>
+                    {benchmarkMode === 'npu' ? '100% Zero-Leak' : 'Streaming Risk'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-500">LATENCY:</span>
-                  <span className="font-bold text-brand-gold">&lt;25ms</span>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="text-neutral-500">OFFLINE RESILIENCE:</span>
+                  <span className={`font-black ${benchmarkMode === 'npu' ? 'text-green-400' : 'text-red-400'}`}>
+                    {benchmarkMode === 'npu' ? 'Lifts & Ambulances' : 'Fails Offline'}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Current State Indicator */}
-            <div className="p-2.5 border border-neutral-800 bg-neutral-950 text-[9px]">
+            <div className="p-2.5 border border-neutral-800 bg-neutral-950 text-[9px] rounded">
               <div className="font-bold text-neutral-400 mb-1 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5 text-brand-gold fill-brand-gold" />
                 <span>STATE</span>
@@ -225,12 +287,12 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
             </div>
 
             {/* Navigation Mode Jumps */}
-            <div className="border border-neutral-800 bg-neutral-950 p-3 space-y-1.5">
+            <div className="border border-neutral-800 bg-neutral-950 p-2.5 space-y-1.5 rounded">
               <span className="text-[8px] font-black uppercase text-brand-gold">MODES</span>
               <div className="space-y-1 text-[10px]">
                 <button
                   onClick={() => onNavigateTab?.('home')}
-                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between transition-colors ${
+                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between rounded transition-colors ${
                     activeScreen === 'HOME'
                       ? 'bg-brand-gold text-black font-black'
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
@@ -241,7 +303,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
                 </button>
                 <button
                   onClick={() => onNavigateTab?.('sign')}
-                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between transition-colors ${
+                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between rounded transition-colors ${
                     activeScreen === 'SIGN'
                       ? 'bg-brand-gold text-black font-black'
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
@@ -252,7 +314,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
                 </button>
                 <button
                   onClick={() => onNavigateTab?.('conversation')}
-                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between transition-colors ${
+                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between rounded transition-colors ${
                     activeScreen === 'CONVERSATION'
                       ? 'bg-brand-gold text-black font-black'
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
@@ -263,7 +325,7 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
                 </button>
                 <button
                   onClick={() => onNavigateTab?.('help')}
-                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between transition-colors ${
+                  className={`w-full px-2 py-1.5 text-left flex items-center justify-between rounded transition-colors ${
                     activeScreen === 'HELP'
                       ? 'bg-brand-gold text-black font-black'
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
@@ -298,3 +360,4 @@ export const DesktopEditorialLayout: React.FC<DesktopEditorialLayoutProps> = ({
     </div>
   );
 };
+

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CameraPreview } from '../components/CameraPreview';
 import { recognitionService, RecognitionResult } from '../services/recognitionService';
 import { speechService } from '../services/speechService';
+import { hapticService } from '../services/hapticService';
 import { Volume2, RotateCcw, Check, AlertCircle, ArrowLeft, MessageSquare, VolumeX } from 'lucide-react';
 import { AudioWaveform } from '../components/AudioWaveform';
 
@@ -39,6 +40,7 @@ export const SignMode: React.FC<SignModeProps> = ({
         setResult(res);
         setState('uncertain');
         setStageProgress(3);
+        hapticService.triggerUncertain();
       } else {
         setTimeout(() => setStageProgress(3), 300); // Recognition
         const res = await recognitionService.recognizeSign(signKey);
@@ -46,9 +48,11 @@ export const SignMode: React.FC<SignModeProps> = ({
         setResult(res);
         setState('success');
         setRecognizedSignsList((prev) => (prev.includes(res.sign) ? prev : [...prev, res.sign]));
+        hapticService.triggerSuccess();
       }
     } catch {
       setState('uncertain');
+      hapticService.triggerUncertain();
     }
   };
 
@@ -64,6 +68,7 @@ export const SignMode: React.FC<SignModeProps> = ({
     if (!result) return;
     setIsSpeaking(true);
     setStageProgress(5); // Voice
+    hapticService.triggerBroadcast();
     speechService.speak(
       result.text,
       () => setIsSpeaking(true),
@@ -227,6 +232,22 @@ export const SignMode: React.FC<SignModeProps> = ({
                     </div>
                     <span className="text-xl">📝</span>
                   </div>
+
+                  {/* Haptic Silent Confirmation Indicator */}
+                  <div className="mt-2 p-2 rounded-xl bg-black border border-neutral-800 flex items-center justify-between font-mono text-[9px]">
+                    <div className="flex items-center gap-1.5 text-neutral-300">
+                      <span className="text-brand-gold text-xs">📳</span>
+                      <span className="text-neutral-400">TACTILE CUE:</span>
+                      <span className="text-brand-gold font-bold">1 Crisp Pulse (Confirmed)</span>
+                    </div>
+                    <button
+                      onClick={() => hapticService.triggerSuccess()}
+                      className="px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 hover:bg-brand-gold hover:text-black hover:border-brand-gold text-[8.5px] font-bold text-neutral-200 transition-colors"
+                      title="Simulate tactile vibration feedback"
+                    >
+                      TEST VIBRATE
+                    </button>
+                  </div>
                 </div>
 
                 {/* Audio Waveform while speaking */}
@@ -295,6 +316,22 @@ export const SignMode: React.FC<SignModeProps> = ({
                 <p className="font-sans text-xs text-neutral-300">
                   Please show the sign again clearly inside the gold frame.
                 </p>
+
+                {/* Haptic Silent Warning Indicator */}
+                <div className="mt-2 p-2 rounded-xl bg-black border border-amber-900/60 flex items-center justify-between font-mono text-[9px]">
+                  <div className="flex items-center gap-1.5 text-amber-300">
+                    <span className="text-xs">📳📳</span>
+                    <span className="text-neutral-400">TACTILE CUE:</span>
+                    <span className="text-amber-400 font-bold">2 Pulses (Retry Needed)</span>
+                  </div>
+                  <button
+                    onClick={() => hapticService.triggerUncertain()}
+                    className="px-2 py-0.5 rounded bg-neutral-900 border border-neutral-700 hover:bg-amber-500 hover:text-black hover:border-amber-500 text-[8.5px] font-bold text-neutral-200 transition-colors"
+                  >
+                    TEST VIBRATE
+                  </button>
+                </div>
+
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={handleTryAgain}
