@@ -53,11 +53,11 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
   private mode: RecognitionMode = 'live';
   private serverUrl: string = (import.meta as any).env?.VITE_ASL_SERVER_URL || '';
   private candidateUrls = [
+    'https://signifyprototype.onrender.com',
     'http://localhost:7860',
     'http://127.0.0.1:7860',
     'http://127.0.0.1:8000',
     'https://sponsorship-tanks-pos-street.trycloudflare.com',
-    'https://srivenkatesh2007-signify-asl-bridge.hf.space'
   ];
   private serverStatus: ServerStatus = 'connecting';
   private lastHealthCheck = 0;
