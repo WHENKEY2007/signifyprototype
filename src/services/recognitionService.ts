@@ -97,7 +97,7 @@ export class DemoRecognitionService implements IRecognitionService {
 
 export class LiveKaggleRecognitionService implements IRecognitionService {
   private demoService: DemoRecognitionService;
-  private serverUrl = 'http://127.0.0.1:8000';
+  private serverUrl = (import.meta as any).env?.VITE_ASL_SERVER_URL || 'http://127.0.0.1:8000';
   private isServerOnline = false;
   private lastHealthCheck = 0;
   private offscreenCanvas: HTMLCanvasElement | null = null;
