@@ -399,7 +399,7 @@ export const SignMode: React.FC<SignModeProps> = ({
               ? `${currentDetection.word}`
               : 'POSITION HAND IN FRAME'
           }
-          className="h-[210px] sm:h-[250px] flex-shrink-0"
+          className="h-[280px] sm:h-[320px] flex-shrink-0"
         />
 
         {/* 2. DETECTED SIGN & RECOGNITION STATE STRIP */}

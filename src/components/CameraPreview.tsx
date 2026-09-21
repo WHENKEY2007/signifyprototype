@@ -98,24 +98,24 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
 
       {/* Fallback Animated Stage when camera is simulated / denied */}
       {!cameraActive && (
-        <div className="w-full h-full min-h-[280px] sm:min-h-[340px] flex flex-col items-center justify-center bg-gradient-to-b from-neutral-950 via-black to-neutral-950 text-neutral-300 p-6 relative">
-          {/* Subtle Ambient Hand Silhouette Guide */}
-          <div className="relative w-44 h-52 flex items-center justify-center">
+        <div className="w-full h-full min-h-[300px] sm:min-h-[360px] flex flex-col items-center justify-center bg-gradient-to-b from-neutral-950 via-black to-neutral-950 text-neutral-300 p-4 relative">
+          {/* Subtle Ambient Hand Silhouette Guide - Enlarged */}
+          <div className="relative w-56 h-64 flex items-center justify-center">
             {/* Soft pulsing gold halo */}
             <div
-              className={`absolute inset-0 rounded-full bg-brand-gold/15 blur-xl transition-transform duration-700 ${
-                isScanning ? 'scale-110 opacity-70 animate-pulse' : 'scale-95 opacity-30'
+              className={`absolute inset-0 rounded-full bg-brand-gold/20 blur-2xl transition-transform duration-700 ${
+                isScanning ? 'scale-115 opacity-80 animate-pulse' : 'scale-100 opacity-40'
               }`}
             />
 
-            {/* Hand Contour Guide (Vector SVG) */}
+            {/* Hand Contour Guide (Vector SVG) - Enlarged */}
             <svg
-              className={`w-36 h-44 transition-all duration-300 ${
+              className={`w-48 h-56 transition-all duration-300 ${
                 isScanning
-                  ? 'text-brand-gold stroke-brand-gold'
+                  ? 'text-brand-gold stroke-brand-gold drop-shadow-[0_0_12px_rgba(255,208,0,0.8)]'
                   : currentSign
-                  ? 'text-brand-gold stroke-brand-gold drop-shadow-[0_0_8px_rgba(255,208,0,0.6)]'
-                  : 'text-neutral-600 stroke-neutral-600'
+                  ? 'text-brand-gold stroke-brand-gold drop-shadow-[0_0_10px_rgba(255,208,0,0.6)]'
+                  : 'text-neutral-500 stroke-neutral-500'
               }`}
               viewBox="0 0 100 130"
               fill="none"
@@ -133,7 +133,7 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
             </svg>
           </div>
 
-          <p className="font-mono text-[10px] text-neutral-400 text-center mt-2 max-w-[220px] uppercase tracking-wider">
+          <p className="font-mono text-xs font-black text-brand-gold text-center mt-3 px-3 py-1 rounded-full bg-black/80 border border-brand-gold/40 shadow-[0_0_10px_rgba(255,208,0,0.2)] uppercase tracking-wider">
             {cameraPermissionFailed
               ? 'SIMULATED RECOGNITION ACTIVE'
               : 'POSITION HAND INSIDE FRAME TO SIGN'}
@@ -141,13 +141,13 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
         </div>
       )}
 
-      {/* Gold Hand Framing Corners Overlay */}
-      <div className="absolute inset-4 pointer-events-none flex items-center justify-center">
-        <div className="w-56 h-64 border border-dashed border-brand-gold/30 rounded-3xl relative flex items-center justify-center">
-          <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-brand-gold rounded-tl-lg shadow-[0_0_8px_#FFD000]" />
-          <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-brand-gold rounded-tr-lg shadow-[0_0_8px_#FFD000]" />
-          <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-brand-gold rounded-bl-lg shadow-[0_0_8px_#FFD000]" />
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-brand-gold rounded-br-lg shadow-[0_0_8px_#FFD000]" />
+      {/* Spacious Gold Hand Framing Corners Overlay */}
+      <div className="absolute inset-2 sm:inset-3 pointer-events-none flex items-center justify-center">
+        <div className="w-[90%] h-[85%] max-w-[360px] max-h-[300px] border-2 border-dashed border-brand-gold/40 rounded-3xl relative flex items-center justify-center">
+          <div className="absolute -top-1.5 -left-1.5 w-6 h-6 border-t-4 border-l-4 border-brand-gold rounded-tl-xl shadow-[0_0_12px_#FFD000]" />
+          <div className="absolute -top-1.5 -right-1.5 w-6 h-6 border-t-4 border-r-4 border-brand-gold rounded-tr-xl shadow-[0_0_12px_#FFD000]" />
+          <div className="absolute -bottom-1.5 -left-1.5 w-6 h-6 border-b-4 border-l-4 border-brand-gold rounded-bl-xl shadow-[0_0_12px_#FFD000]" />
+          <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 border-b-4 border-r-4 border-brand-gold rounded-br-xl shadow-[0_0_12px_#FFD000]" />
         </div>
       </div>
 
