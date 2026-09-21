@@ -21,6 +21,7 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
   const [cameraActive, setCameraActive] = useState<boolean>(false);
   const [cameraPermissionFailed, setCameraPermissionFailed] = useState<boolean>(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [isMirrored, setIsMirrored] = useState<boolean>(true);
 
   // Attempt real camera access
   useEffect(() => {
@@ -34,7 +35,7 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
 
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode },
+          video: { facingMode: { ideal: facingMode } },
           audio: false,
         });
 
@@ -45,8 +46,22 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
           setCameraPermissionFailed(false);
         }
       } catch {
-        setCameraActive(false);
-        setCameraPermissionFailed(true);
+        // Fallback for single-camera devices (e.g. laptops) so camera stays open
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(() => {});
+            setCameraActive(true);
+            setCameraPermissionFailed(false);
+          }
+        } catch {
+          setCameraActive(false);
+          setCameraPermissionFailed(true);
+        }
       }
     }
 
@@ -60,6 +75,7 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
   }, [facingMode]);
 
   const toggleCameraFacing = () => {
+    setIsMirrored((prev) => !prev);
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
@@ -74,7 +90,8 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
         playsInline
         muted
         autoPlay
-        className={`w-full h-full object-cover transition-opacity duration-300 ${
+        style={{ transform: isMirrored ? 'scaleX(-1)' : 'scaleX(1)' }}
+        className={`w-full h-full object-cover transition-all duration-300 ${
           cameraActive ? 'opacity-90' : 'opacity-0 absolute inset-0 pointer-events-none'
         }`}
       />
@@ -160,10 +177,10 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
             <button
               onClick={toggleCameraFacing}
               className="p-1.5 bg-black/85 backdrop-blur-md rounded-full text-neutral-300 hover:text-brand-gold transition-colors border border-neutral-700"
-              title="Flip Camera"
-              aria-label="Flip Camera"
+              title={isMirrored ? "Mirror View: ON (Click to Invert)" : "Mirror View: OFF (Click to Mirror)"}
+              aria-label="Flip Camera Mirror View"
             >
-              <RefreshCw className="w-3 h-3" />
+              <RefreshCw className={`w-3 h-3 transition-transform duration-300 ${isMirrored ? 'text-brand-gold rotate-180' : ''}`} />
             </button>
           )}
         </div>
