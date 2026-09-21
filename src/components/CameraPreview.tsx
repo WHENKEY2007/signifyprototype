@@ -69,6 +69,7 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
     >
       {/* Video Element for Real Camera Feed */}
       <video
+        id="signify-camera-video"
         ref={videoRef}
         playsInline
         muted

@@ -118,6 +118,62 @@ export const SignMode: React.FC<SignModeProps> = ({
     setIsDetecting(false);
   };
 
+  // Live camera gesture recognition loop (connects to Kaggle ASL bridge)
+  useEffect(() => {
+    let isMounted = true;
+    let loopTimeout: ReturnType<typeof setTimeout>;
+    let isProcessing = false;
+
+    const pollLiveCamera = async () => {
+      if (!isMounted) return;
+
+      // Only poll when not speaking and not playing a demo sequence
+      if (!isSpeaking && !sequenceTimerRef.current && !isProcessing) {
+        const video = document.getElementById('signify-camera-video') as HTMLVideoElement | null;
+        if (video && video.readyState >= 2 && !video.paused) {
+          isProcessing = true;
+          try {
+            const result = await recognitionService.recognizeSign();
+            if (isMounted && result) {
+              if (result.word && result.word !== 'SCANNING' && result.confidence >= 70) {
+                setCurrentDetection(result);
+                setIsLowConfidence(false);
+                setWordBuffer((prev) => {
+                  if (prev.length === 0 || prev[prev.length - 1] !== result.word) {
+                    return [...prev, result.word];
+                  }
+                  return prev;
+                });
+                hapticService.triggerSuccess();
+                // Cooldown so user can prepare next sign
+                await new Promise((r) => setTimeout(r, 1000));
+              } else if (result.word === 'SCANNING') {
+                setIsDetecting(true);
+              } else {
+                setIsDetecting(false);
+              }
+            }
+          } catch {
+            // Quiet fallback
+          } finally {
+            isProcessing = false;
+          }
+        }
+      }
+
+      if (isMounted) {
+        loopTimeout = setTimeout(pollLiveCamera, 300);
+      }
+    };
+
+    loopTimeout = setTimeout(pollLiveCamera, 500);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(loopTimeout);
+    };
+  }, [isSpeaking]);
+
   const runDemoSequence = (words: string[]) => {
     setWordBuffer([]);
     setCurrentDetection(null);
