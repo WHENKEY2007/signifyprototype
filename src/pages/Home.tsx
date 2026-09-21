@@ -38,9 +38,9 @@ export const Home: React.FC<HomeProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 font-mono text-[10px] px-2.5 py-0.5 bg-neutral-900 text-brand-gold border border-brand-gold/60 rounded-full font-bold shadow-sm">
+          <div className="flex items-center gap-1.5 font-mono text-[9px] px-2.5 py-0.5 bg-neutral-900 rounded-full border shadow-sm font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-gold animate-pulse" />
-            <span>● AI READY</span>
+            <span className="text-brand-gold">KAGGLE ASL 250</span>
           </div>
 
           {onSettings && (
@@ -191,22 +191,22 @@ export const Home: React.FC<HomeProps> = ({
       {/* 17. HOW IT WORKS EXPANDABLE SECTION / MODAL */}
       {/* ================================================== */}
       {isHowItWorksOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg max-h-[90vh] bg-neutral-950 border border-brand-gold/60 rounded-3xl p-5 overflow-y-auto shadow-2xl relative">
+        <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 animate-in fade-in duration-200">
+          <div className="w-full max-h-[85vh] bg-neutral-950 border border-brand-gold/60 rounded-3xl p-4 overflow-y-auto shadow-2xl relative">
             <div className="flex items-center justify-between pb-3 border-b border-neutral-800 mb-4">
               <div>
                 <div className="font-mono text-[10px] text-brand-gold font-bold uppercase">
                   SYSTEM ARCHITECTURE
                 </div>
-                <h2 className="font-sans font-black text-lg text-white uppercase">
+                <h2 className="font-sans font-black text-base text-white uppercase">
                   How Signify understands your message
                 </h2>
               </div>
               <button
                 onClick={() => setIsHowItWorksOpen(false)}
-                className="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-700 text-neutral-400 hover:text-black hover:bg-brand-gold flex items-center justify-center transition-colors"
+                className="w-7 h-7 rounded-lg bg-neutral-900 border border-neutral-700 text-neutral-400 hover:text-black hover:bg-brand-gold flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 

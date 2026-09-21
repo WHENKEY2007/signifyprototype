@@ -162,11 +162,11 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
           <span>{cameraActive ? 'CAMERA: ACTIVE' : 'DEMO MODE'}</span>
         </div>
 
-        {/* NPU Latency & Haptic Status Badges */}
+        {/* Vision & Haptic Status Badges */}
         <div className="flex items-center gap-1">
-          <div className="px-2 py-0.5 bg-black/90 backdrop-blur-md rounded-full text-green-400 border border-green-500/40 text-[8.5px] font-mono font-black flex items-center gap-1">
-            <span className="w-1 h-1 rounded-full bg-green-400 animate-ping" />
-            <span>NPU: 18ms</span>
+          <div className="px-2 py-0.5 bg-black/90 backdrop-blur-md rounded-full text-brand-gold border border-brand-gold/40 text-[8.5px] font-mono font-black flex items-center gap-1">
+            <span className="w-1 h-1 rounded-full bg-brand-gold animate-pulse" />
+            <span>KAGGLE ASL 250</span>
           </div>
 
           <div className="px-2 py-0.5 bg-black/90 backdrop-blur-md rounded-full text-brand-gold border border-brand-gold/40 text-[8.5px] font-mono font-black">

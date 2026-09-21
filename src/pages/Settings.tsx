@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Shield, Volume2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Volume2, Sparkles, Info, Wifi, WifiOff } from 'lucide-react';
+import { recognitionService } from '../services/recognitionService';
+import { KAGGLE_MODEL_SPECS, KAGGLE_CONFIDENCE_THRESHOLD } from '../data/modelVocabulary';
 
 interface SettingsProps {
   onBack: () => void;
@@ -7,7 +9,20 @@ interface SettingsProps {
 
 export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const [demoMode, setDemoMode] = useState<boolean>(true);
+  const [currentMode, setCurrentMode] = useState<'live' | 'demo'>(recognitionService.getMode());
+  const [serverOnline, setServerOnline] = useState<boolean>(recognitionService.isKaggleConnected());
+
+  useEffect(() => {
+    recognitionService.checkServerHealth().then((online) => {
+      setServerOnline(online);
+    });
+  }, []);
+
+  const handleToggleMode = () => {
+    const next = currentMode === 'live' ? 'demo' : 'live';
+    recognitionService.setMode(next);
+    setCurrentMode(next);
+  };
 
   return (
     <div className="flex-1 w-full bg-black text-white flex flex-col justify-between select-none relative overflow-y-auto">
@@ -26,37 +41,100 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
           <h1 className="font-sans font-black text-base text-white leading-none uppercase tracking-wide">
-            SETTINGS & ABOUT
+            SETTINGS & AI SPECS
           </h1>
         </div>
       </div>
 
       {/* Main Settings List */}
-      <div className="flex-1 p-5 overflow-y-auto space-y-4 z-10">
+      <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-4 z-10 font-mono">
         
-        {/* Privacy Note */}
-        <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 shadow-sm space-y-1.5">
-          <div className="flex items-center gap-2 text-white font-mono font-bold text-xs uppercase">
-            <Shield className="w-4 h-4 text-brand-gold" />
-            <span>ON-DEVICE PRIVACY GUARANTEE</span>
+        {/* AI TRANSPARENCY & VERIFIED MODEL SPECS (Phase 12 & 17) */}
+        <div className="p-4 rounded-2xl bg-neutral-950 border border-brand-gold/60 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-neutral-800 pb-2">
+            <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
+              <Info className="w-4 h-4 text-brand-gold" />
+              <span>AI TRANSPARENCY & MODEL SPECS</span>
+            </div>
+            <span className="text-[8px] px-2 py-0.5 bg-brand-gold text-black font-black uppercase rounded">
+              VERIFIED
+            </span>
           </div>
-          <p className="font-sans text-xs text-neutral-300 leading-relaxed">
-            Signify is architected for on-device processing. No camera feeds or audio transcripts are transmitted to external servers.
-          </p>
+
+          <div className="space-y-2 text-[10px]">
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Foundation Model:</span>
+              <span className="text-white font-bold">Kaggle ASL ISLR (Google Competition)</span>
+            </div>
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Classes Count:</span>
+              <span className="text-brand-gold font-bold">{KAGGLE_MODEL_SPECS.classesCount} Classes</span>
+            </div>
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Input Landmarks:</span>
+              <span className="text-white font-bold">543 Keypoints (x, y, z)</span>
+            </div>
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Model Format:</span>
+              <span className="text-white">TFLite Signature Runner</span>
+            </div>
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Confidence Gate:</span>
+              <span className="text-brand-gold font-bold">{KAGGLE_CONFIDENCE_THRESHOLD}% Acceptance Threshold</span>
+            </div>
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Current Runtime:</span>
+              <span className="text-neutral-300">FastAPI REST Bridge / HF Spaces</span>
+            </div>
+            <div className="flex justify-between py-0.5 border-b border-neutral-900">
+              <span className="text-neutral-500">Snapdragon NPU:</span>
+              <span className="text-brand-gold font-bold">REQUIRED HARDWARE (Hexagon DSP / QNN)</span>
+            </div>
+            <div className="flex justify-between py-0.5">
+              <span className="text-neutral-500">Sentence Builder:</span>
+              <span className="text-neutral-300">Context Grammar Engine (Not LLM)</span>
+            </div>
+          </div>
         </div>
 
-        {/* Toggles */}
+        {/* CONTROLS */}
         <div className="bg-neutral-950 rounded-2xl border border-neutral-800 divide-y divide-neutral-900 overflow-hidden">
           
-          {/* Sound Toggle */}
+          {/* Mode Switcher */}
+          <div className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-800 text-brand-gold flex items-center justify-center">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-xs text-white uppercase">RECOGNITION MODE</div>
+                <div className="text-[10px] text-neutral-400">
+                  {currentMode === 'live' ? '● LIVE KAGGLE MODEL' : '◆ DEMO WALKTHROUGH'}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleToggleMode}
+              className={`px-3 py-1.5 rounded-lg font-mono font-bold text-xs transition-colors ${
+                currentMode === 'live'
+                  ? 'bg-brand-gold text-black shadow-sm'
+                  : 'bg-neutral-800 text-neutral-300'
+              }`}
+            >
+              {currentMode === 'live' ? 'LIVE' : 'DEMO'}
+            </button>
+          </div>
+
+          {/* Voice Broadcast Toggle */}
           <div className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-800 text-brand-gold flex items-center justify-center">
                 <Volume2 className="w-4 h-4" />
               </div>
               <div>
-                <div className="font-mono font-bold text-xs text-white uppercase">VOICE BROADCAST</div>
-                <div className="font-mono text-[10px] text-neutral-400">SPEECH SYNTHESIS ENGINE</div>
+                <div className="font-bold text-xs text-white uppercase">VOICE SYNTHESIS</div>
+                <div className="text-[10px] text-neutral-400">WEB SPEECH API AUDIO BROADCAST</div>
               </div>
             </div>
 
@@ -74,44 +152,31 @@ export const Settings: React.FC<SettingsProps> = ({ onBack }) => {
             </button>
           </div>
 
-          {/* Demo Mode Toggle */}
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-neutral-900 border border-neutral-800 text-brand-gold flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="font-mono font-bold text-xs text-white uppercase">DEMO RECOGNITION</div>
-                <div className="font-mono text-[10px] text-neutral-400">DETERMINISTIC INFERENCE</div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setDemoMode(!demoMode)}
-              className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
-                demoMode ? 'bg-brand-gold' : 'bg-neutral-800'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-black shadow-sm transition-transform ${
-                  demoMode ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-
         </div>
 
-        {/* About Card */}
-        <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-2">
-          <div className="font-mono font-bold text-xs text-brand-gold uppercase">ABOUT SIGNIFY</div>
-          <p className="font-sans text-xs text-neutral-300 leading-relaxed">
-            Two-way AI communication assistant bridging sign-language users and hearing individuals via real-time gesture-to-speech and voice-to-text.
-          </p>
-          <div className="pt-2 text-[9px] font-mono text-neutral-500 flex justify-between border-t border-neutral-900">
-            <span>VERSION 0.2 PROTOTYPE</span>
-            <span>FLAGSHIP HARDWARE</span>
+        {/* Backend Status Card */}
+        <div className="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-1.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-white uppercase text-[10px]">KAGGLE ASL BRIDGE STATUS</span>
+            <div className="flex items-center gap-1">
+              {serverOnline ? (
+                <span className="text-green-400 font-bold flex items-center gap-1 text-[10px]">
+                  <Wifi className="w-3 h-3" />
+                  ONLINE
+                </span>
+              ) : (
+                <span className="text-amber-400 font-bold flex items-center gap-1 text-[10px]">
+                  <WifiOff className="w-3 h-3" />
+                  OFFLINE
+                </span>
+              )}
+            </div>
           </div>
+          <p className="font-sans text-[11px] text-neutral-400 leading-relaxed">
+            {serverOnline
+              ? `Connected to ${recognitionService.getServerUrl()}`
+              : 'Backend is currently offline or unreachable. Signify automatically supports offline demo walkthroughs without pretending fake predictions.'}
+          </p>
         </div>
 
       </div>

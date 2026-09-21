@@ -19,6 +19,9 @@ export class SpeechService {
   private fallbackIndex = 0;
   private recognition: any = null;
   private isListeningActive = false;
+  private currentSessionFinal = '';
+  private onResultCallback: ((text: string) => void) | null = null;
+  private hasDispatchedResult = false;
 
   constructor() {
     // Check for native SpeechRecognition support
@@ -28,9 +31,6 @@ export class SpeechService {
       if (SpeechRecognition) {
         try {
           this.recognition = new SpeechRecognition();
-          this.recognition.continuous = false;
-          this.recognition.interimResults = false;
-          this.recognition.lang = 'en-US';
         } catch (e) {
           console.warn('SpeechRecognition initialization error:', e);
         }
@@ -92,64 +92,131 @@ export class SpeechService {
   }
 
   /**
-   * Listen for spoken audio via Web Speech API or realistic fallback
+   * Listen for spoken audio via Web Speech API with real-time interim results.
+   * Dispatches EXACTLY ONCE to prevent duplicate conversation entries.
    */
   public startListening(
     onResult: (text: string) => void,
     onStart?: () => void,
-    onEnd?: () => void
+    onEnd?: () => void,
+    onInterim?: (interimText: string) => void,
+    onError?: (error: any) => void
   ): void {
+    // Abort any existing ongoing session
+    this.stopListening();
+
     this.isListeningActive = true;
-    onStart?.();
+    this.currentSessionFinal = '';
+    this.hasDispatchedResult = false;
+    this.onResultCallback = onResult;
 
-    if (this.recognition) {
-      this.recognition.onresult = (event: any) => {
-        const transcript = event.results[0]?.[0]?.transcript;
-        if (transcript) {
-          onResult(transcript);
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          // Fresh instance per listening session prevents Chrome/WebKit stale event listener bugs
+          const recognition = new SpeechRecognition();
+          recognition.continuous = false;
+          recognition.interimResults = true;
+          recognition.lang = navigator.language || 'en-US';
+          recognition.maxAlternatives = 1;
+          this.recognition = recognition;
+
+          recognition.onstart = () => {
+            onStart?.();
+          };
+
+          recognition.onresult = (event: any) => {
+            let sessionFinal = '';
+            let sessionInterim = '';
+
+            for (let i = 0; i < event.results.length; ++i) {
+              const res = event.results[i];
+              if (res.isFinal) {
+                sessionFinal += res[0]?.transcript + ' ';
+              } else {
+                sessionInterim += res[0]?.transcript;
+              }
+            }
+
+            if (sessionFinal.trim()) {
+              this.currentSessionFinal = sessionFinal.trim();
+            }
+
+            const livePreview = (sessionFinal + sessionInterim).trim();
+            if (livePreview) {
+              onInterim?.(livePreview);
+            }
+          };
+
+          recognition.onerror = (event: any) => {
+            // 'no-speech' and 'aborted' are normal user flow states, not fatal errors
+            if (event.error !== 'no-speech' && event.error !== 'aborted') {
+              console.warn('Speech recognition error:', event.error);
+              onError?.(event.error);
+            }
+          };
+
+          recognition.onend = () => {
+            this.isListeningActive = false;
+            onEnd?.();
+
+            // Dispatch final result once if not already dispatched
+            const textToEmit = this.currentSessionFinal.trim();
+            if (!this.hasDispatchedResult && textToEmit && this.onResultCallback) {
+              this.hasDispatchedResult = true;
+              this.onResultCallback(textToEmit);
+            }
+          };
+
+          recognition.start();
+          return;
+        } catch (e) {
+          console.warn('Failed to start native recognition:', e);
         }
-      };
-
-      this.recognition.onerror = () => {
-        // Fallback gracefully on recognition error
-        this.triggerFallbackPhrase(onResult);
-      };
-
-      this.recognition.onend = () => {
-        this.isListeningActive = false;
-        onEnd?.();
-      };
-
-      try {
-        this.recognition.start();
-        return;
-      } catch (e) {
-        console.warn('Failed to start native recognition, using demo fallback:', e);
       }
     }
 
-    // Realistic demo fallback simulation
+    // Realistic demo fallback simulation ONLY if SpeechRecognition is entirely missing in browser
     setTimeout(() => {
-      if (this.isListeningActive) {
+      if (this.isListeningActive && !this.hasDispatchedResult) {
+        this.hasDispatchedResult = true;
         this.triggerFallbackPhrase(onResult);
         this.isListeningActive = false;
         onEnd?.();
       }
-    }, 1800);
+    }, 2200);
   }
 
-  public stopListening(): void {
+  /**
+   * Stop listening and optionally flush whatever text was recognized
+   */
+  public stopListening(flushResult: boolean = false): void {
     this.isListeningActive = false;
+
     if (this.recognition) {
       try {
+        if (flushResult && !this.hasDispatchedResult && this.currentSessionFinal.trim() && this.onResultCallback) {
+          this.hasDispatchedResult = true;
+          this.onResultCallback(this.currentSessionFinal.trim());
+        }
         this.recognition.stop();
       } catch {
-        // Ignore if already stopped
+        try {
+          this.recognition.abort();
+        } catch {}
       }
+      this.recognition = null;
     }
   }
 
-  private triggerFallbackPhrase(onResult: (text: string) => void) {
+  public getCurrentTranscript(): string {
+    return this.currentSessionFinal;
+  }
+
+  private triggerFallbackPhrase(onResult: (text: string) => void): void {
     const phrase = FALLBACK_PHRASES[this.fallbackIndex % FALLBACK_PHRASES.length];
     this.fallbackIndex++;
     onResult(phrase);

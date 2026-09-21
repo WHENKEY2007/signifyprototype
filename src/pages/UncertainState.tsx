@@ -51,10 +51,10 @@ export const UncertainState: React.FC<UncertainStateProps> = ({
           <div className="flex items-center justify-between mb-2">
             <span className="font-mono text-[9px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-              GESTURE RECOGNITION LOW ACCURACY
+              LOW CONFIDENCE GESTURE (BELOW 70% GATE)
             </span>
             <span className="px-1.5 py-0.2 bg-amber-950 text-amber-200 border border-amber-600 font-mono text-[9px] font-bold">
-              {confidence}% SCORE
+              {confidence}% CONFIDENCE
             </span>
           </div>
 

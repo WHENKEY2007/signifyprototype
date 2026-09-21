@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Volume2, VolumeX, Camera, Trash2, X, Check } from 'lucide-react';
+import { Volume2, VolumeX, Camera, Trash2, X, Check, Mic } from 'lucide-react';
 import { speechService } from '../services/speechService';
 import { recognitionService } from '../services/recognitionService';
 import { sentenceBuilder } from '../services/sentenceBuilderService';
 import { CameraPreview } from '../components/CameraPreview';
+import { AudioWaveform } from '../components/AudioWaveform';
 
 export interface ConversationMessage {
   id: string;
@@ -17,12 +18,14 @@ interface ConversationModeProps {
   messages: ConversationMessage[];
   onAddMessage: (sender: 'signer' | 'speaker', text: string, sign?: string) => void;
   onClearConversation: () => void;
+  onSignModalStateChange?: (isOpen: boolean) => void;
 }
 
 export const ConversationMode: React.FC<ConversationModeProps> = ({
   messages,
   onAddMessage,
   onClearConversation,
+  onSignModalStateChange,
 }) => {
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   
@@ -32,7 +35,13 @@ export const ConversationMode: React.FC<ConversationModeProps> = ({
   const [detectedSign, setDetectedSign] = useState<{ sign: string; text: string; confidence: number } | null>(null);
 
   // Quick Speak state
+  const [isSpeakModalOpen, setIsSpeakModalOpen] = useState<boolean>(false);
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [liveTranscript, setLiveTranscript] = useState<string>('');
+
+  useEffect(() => {
+    onSignModalStateChange?.(isSignModalOpen || isSpeakModalOpen);
+  }, [isSignModalOpen, isSpeakModalOpen, onSignModalStateChange]);
 
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -81,21 +90,57 @@ export const ConversationMode: React.FC<ConversationModeProps> = ({
     }
   };
 
-  // Quick Speak Trigger
-  const handleStartSpeak = () => {
+  // Quick Speak Trigger with Real-Time Transcription
+  const handleOpenSpeakModal = () => {
+    setIsSpeakModalOpen(true);
+    setLiveTranscript('');
     setIsListening(true);
+
     speechService.startListening(
-      (text) => {
-        onAddMessage('speaker', text);
+      // onFinal (dispatches exactly once):
+      (finalText) => {
+        if (finalText && finalText.trim()) {
+          onAddMessage('speaker', finalText.trim());
+          setIsSpeakModalOpen(false);
+          setIsListening(false);
+          setLiveTranscript('');
+        }
+      },
+      // onStart:
+      () => {
+        setIsListening(true);
+      },
+      // onEnd:
+      () => {
         setIsListening(false);
       },
-      () => setIsListening(true),
-      () => setIsListening(false)
+      // onInterim (live real-time typing display):
+      (interimText) => {
+        setLiveTranscript(interimText);
+      }
     );
   };
 
+  const handleStopAndSendSpeech = () => {
+    const textToSend = (liveTranscript || speechService.getCurrentTranscript()).trim();
+    speechService.stopListening(false);
+    if (textToSend) {
+      onAddMessage('speaker', textToSend);
+    }
+    setIsSpeakModalOpen(false);
+    setIsListening(false);
+    setLiveTranscript('');
+  };
+
+  const handleCancelSpeak = () => {
+    speechService.stopListening(false);
+    setIsSpeakModalOpen(false);
+    setIsListening(false);
+    setLiveTranscript('');
+  };
+
   return (
-    <div className="flex-1 w-full bg-black text-white flex flex-col justify-between select-none relative overflow-y-auto">
+    <div className="flex-1 w-full bg-black text-white flex flex-col justify-between select-none relative overflow-hidden">
       {/* Background Grid */}
       <div className="absolute inset-0 bg-grid-tech opacity-15 pointer-events-none" />
 
@@ -218,37 +263,45 @@ export const ConversationMode: React.FC<ConversationModeProps> = ({
 
           {/* ACTION 2: SPEAK */}
           <button
-            onClick={handleStartSpeak}
-            className={`p-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] border ${
-              isListening
-                ? 'bg-red-600 text-white border-red-500 animate-pulse'
-                : 'bg-neutral-900 hover:bg-neutral-800 text-white border-brand-gold/60 text-brand-gold'
-            }`}
+            onClick={handleOpenSpeakModal}
+            className="p-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] border bg-neutral-900 hover:bg-neutral-800 text-brand-gold border-brand-gold/60 shadow-sm"
           >
             <span className="text-lg">🎤</span>
-            <span>{isListening ? 'LISTENING...' : 'SPEAK'}</span>
+            <span>SPEAK</span>
           </button>
         </div>
       </div>
 
-      {/* QUICK SIGN MODAL SHEET */}
+      {/* QUICK SIGN FULL-SCREEN INTERFACE (Immersive Phone Screen) */}
       {isSignModalOpen && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col justify-end p-3 animate-in fade-in duration-200">
-          <div className="bg-neutral-950 border border-brand-gold/70 rounded-3xl p-5 shadow-2xl space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
-              <div className="flex items-center gap-2 font-mono font-black text-xs text-brand-gold uppercase tracking-wider">
-                <Camera className="w-4 h-4 text-brand-gold" />
-                <span>QUICK SIGN TRANSLATION</span>
+        <div className="absolute inset-0 bg-black z-50 flex flex-col justify-between animate-in fade-in duration-200">
+          {/* Top Bar Header */}
+          <div className="w-full bg-black/95 border-b border-neutral-800 px-4 py-3 flex items-center justify-between flex-shrink-0 z-20">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-brand-gold/15 border border-brand-gold/40 flex items-center justify-center">
+                <Camera className="w-3.5 h-3.5 text-brand-gold" />
               </div>
-              <button
-                onClick={() => setIsSignModalOpen(false)}
-                className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div>
+                <div className="font-mono text-[9px] text-brand-gold font-bold uppercase tracking-wider">
+                  TWO-WAY BRIDGE
+                </div>
+                <h2 className="font-sans font-black text-xs sm:text-sm text-white uppercase tracking-wide">
+                  QUICK SIGN TRANSLATION
+                </h2>
+              </div>
             </div>
+            <button
+              onClick={() => setIsSignModalOpen(false)}
+              className="p-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+              title="Close and return to conversation"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Compact Camera Preview */}
+          {/* Full Screen Immersive Camera Preview */}
+          <div className="flex-1 w-full p-3 flex flex-col min-h-0 relative">
             <CameraPreview
               isScanning={signStatus === 'scanning'}
               currentSign={detectedSign?.sign}
@@ -258,29 +311,132 @@ export const ConversationMode: React.FC<ConversationModeProps> = ({
                   ? 'DETECTING SIGN...'
                   : `✓ DETECTED: ${detectedSign?.sign}`
               }
-              className="h-44"
+              className="w-full h-full flex-1 rounded-2xl overflow-hidden"
             />
+          </div>
 
+          {/* Bottom Action Section */}
+          <div className="p-4 bg-neutral-950 border-t border-neutral-800 flex-shrink-0 z-20 space-y-3">
             {detectedSign ? (
-              <div className="p-3 rounded-xl bg-black border border-brand-gold/60 text-center">
-                <div className="font-mono text-[9px] text-brand-gold font-bold uppercase">
+              <div className="p-3.5 rounded-2xl bg-black border border-brand-gold/70 text-center space-y-1.5 shadow-[0_0_20px_rgba(255,208,0,0.15)]">
+                <div className="font-mono text-[9px] text-brand-gold font-bold uppercase tracking-wider">
                   RECOGNIZED SIGN:
                 </div>
-                <div className="text-xl font-sans font-black text-white mt-0.5">
+                <div className="text-xl font-sans font-black text-white">
                   "{detectedSign.text}"
                 </div>
                 <button
                   onClick={handleConfirmSignMessage}
-                  className="mt-3 w-full py-2.5 px-4 bg-brand-gold hover:bg-yellow-400 text-black font-mono font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_12px_rgba(255,208,0,0.3)] flex items-center justify-center gap-1.5 transition-colors"
+                  className="mt-2 w-full py-3 px-4 bg-brand-gold hover:bg-yellow-400 text-black font-mono font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(255,208,0,0.3)] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                 >
-                  <Check className="w-4 h-4 text-black" />
+                  <Check className="w-4 h-4 text-black stroke-[3]" />
                   <span>SEND TO CONVERSATION</span>
                 </button>
               </div>
             ) : (
-              <div className="text-center py-2 font-mono text-xs text-neutral-400">
-                Hold gesture inside frame to translate...
+              <div className="p-3.5 rounded-2xl bg-neutral-900/80 border border-neutral-800 text-center space-y-1">
+                <div className="font-mono text-xs text-brand-gold font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand-gold animate-ping" />
+                  <span>ANALYZING GESTURE IN REAL-TIME</span>
+                </div>
+                <p className="font-mono text-[10px] text-neutral-400">
+                  Hold hand steady inside frame to trigger Kaggle ASL recognition
+                </p>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* QUICK SPEAK FULL-SCREEN / LIVE TRANSCRIPTION INTERFACE */}
+      {isSpeakModalOpen && (
+        <div className="absolute inset-0 bg-black z-50 flex flex-col justify-between animate-in fade-in duration-200">
+          {/* Top Header */}
+          <div className="w-full bg-black/95 border-b border-neutral-800 px-4 py-3 flex items-center justify-between flex-shrink-0 z-20">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-red-950/80 border border-red-500/50 flex items-center justify-center">
+                <Mic className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+              </div>
+              <div>
+                <div className="font-mono text-[9px] text-brand-gold font-bold uppercase tracking-wider">
+                  VOICE → ACCESSIBLE TEXT
+                </div>
+                <h2 className="font-sans font-black text-xs sm:text-sm text-white uppercase tracking-wide">
+                  SPEECH RECOGNITION
+                </h2>
+              </div>
+            </div>
+            <button
+              onClick={handleCancelSpeak}
+              className="p-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+              title="Cancel"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Center: Live Waveform & Real-Time Transcription */}
+          <div className="flex-1 w-full p-4 flex flex-col items-center justify-center space-y-6 min-h-0">
+            {/* Pulsing Mic Graphic */}
+            <div className="relative flex items-center justify-center">
+              <div
+                className={`w-28 h-28 rounded-full flex items-center justify-center transition-all ${
+                  isListening
+                    ? 'bg-red-500/10 border-2 border-red-500/60 shadow-[0_0_35px_rgba(239,68,68,0.3)] animate-pulse'
+                    : 'bg-neutral-900 border border-neutral-800'
+                }`}
+              >
+                <div
+                  className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                    isListening ? 'bg-red-600 text-white shadow-lg' : 'bg-neutral-800 text-neutral-400'
+                  }`}
+                >
+                  <Mic className="w-9 h-9" />
+                </div>
+              </div>
+            </div>
+
+            {/* Audio Waveform */}
+            <div className="w-full max-w-[280px]">
+              <AudioWaveform isActive={isListening} mode="listening" />
+            </div>
+
+            {/* Live Transcription Box */}
+            <div className="w-full p-4 rounded-2xl bg-neutral-950 border border-neutral-800 text-center space-y-2 min-h-[120px] flex flex-col justify-center">
+              <div className="flex items-center justify-center gap-1.5 font-mono text-[9px] font-bold text-brand-gold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-brand-gold animate-ping" />
+                <span>{isListening ? 'LISTENING IN REAL-TIME...' : 'PROCESSING SPEECH...'}</span>
+              </div>
+
+              {liveTranscript ? (
+                <p className="font-sans font-black text-lg sm:text-xl text-white leading-snug">
+                  "{liveTranscript}"
+                </p>
+              ) : (
+                <p className="font-mono text-xs text-neutral-500">
+                  Speak clearly into your microphone...
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Action Section */}
+          <div className="p-4 bg-neutral-950 border-t border-neutral-800 flex-shrink-0 z-20 space-y-2.5">
+            {liveTranscript ? (
+              <button
+                onClick={handleStopAndSendSpeech}
+                className="w-full py-3.5 px-4 bg-brand-gold hover:bg-yellow-400 text-black font-mono font-black text-xs uppercase tracking-wider rounded-xl shadow-[0_0_15px_rgba(255,208,0,0.3)] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              >
+                <Check className="w-4 h-4 stroke-[3]" />
+                <span>SEND SPOKEN MESSAGE</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleCancelSpeak}
+                className="w-full py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 font-mono font-bold text-xs uppercase tracking-wider rounded-xl border border-neutral-700 transition-colors"
+              >
+                CANCEL
+              </button>
             )}
           </div>
         </div>

@@ -1,0 +1,6 @@
+tensorflow-cpu
+mediapipe
+opencv-python-headless
+fastapi
+uvicorn
+gradio

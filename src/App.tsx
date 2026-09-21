@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   const [messages, setMessages] = useState<ConversationMessage[]>(INITIAL_MESSAGES);
   const [preferredSign, setPreferredSign] = useState<string | undefined>(undefined);
   const [forceUncertain, setForceUncertain] = useState<boolean>(false);
+  const [isConversationSignOpen, setIsConversationSignOpen] = useState<boolean>(false);
 
   // Message Handler for Conversation
   const handleAddMessage = (sender: 'signer' | 'speaker', text: string, sign?: string) => {
@@ -81,6 +82,7 @@ export const App: React.FC = () => {
   const handleBackToHome = () => {
     setForceUncertain(false);
     setPreferredSign(undefined);
+    setIsConversationSignOpen(false);
     setCurrentScreen('home');
   };
 
@@ -104,10 +106,12 @@ export const App: React.FC = () => {
     setMessages(INITIAL_MESSAGES);
     setForceUncertain(false);
     setPreferredSign(undefined);
+    setIsConversationSignOpen(false);
     setCurrentScreen('home');
   };
 
   const handleDesktopNavigateTab = (tab: NavTab) => {
+    setIsConversationSignOpen(false);
     setCurrentScreen(tab);
   };
 
@@ -121,6 +125,7 @@ export const App: React.FC = () => {
   };
 
   const handleSelectTab = (tab: NavTab) => {
+    setIsConversationSignOpen(false);
     if (tab === 'sign') {
       handleSelectSign();
     } else {
@@ -166,6 +171,7 @@ export const App: React.FC = () => {
             messages={messages}
             onAddMessage={handleAddMessage}
             onClearConversation={handleClearConversation}
+            onSignModalStateChange={setIsConversationSignOpen}
           />
         );
 
@@ -188,10 +194,11 @@ export const App: React.FC = () => {
   };
 
   const showBottomNav =
-    currentScreen === 'home' ||
+    (currentScreen === 'home' ||
     currentScreen === 'sign' ||
     currentScreen === 'conversation' ||
-    currentScreen === 'help';
+    currentScreen === 'help') &&
+    !(currentScreen === 'conversation' && isConversationSignOpen);
 
   return (
     <DesktopEditorialLayout

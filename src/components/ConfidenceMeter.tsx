@@ -1,81 +1,87 @@
 import React from 'react';
+import { KAGGLE_CONFIDENCE_THRESHOLD } from '../data/modelVocabulary';
 
 interface ConfidenceMeterProps {
   confidence: number; // 0 to 100
   showLabel?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  threshold?: number;
+  source?: 'LIVE MODEL' | 'DEMO MODE';
+  isSimulated?: boolean;
   status?: 'high' | 'medium' | 'low';
 }
 
 export const ConfidenceMeter: React.FC<ConfidenceMeterProps> = ({
   confidence,
   showLabel = true,
-  status = confidence >= 85 ? 'high' : confidence >= 70 ? 'medium' : 'low'
+  threshold = KAGGLE_CONFIDENCE_THRESHOLD,
+  source = 'LIVE MODEL',
+  isSimulated = false,
+  status,
 }) => {
-  const getStatusConfig = () => {
-    switch (status) {
-      case 'high':
-        return {
-          label: 'HIGH CONFIDENCE',
-          barColor: 'bg-brand-yellow',
-          badgeClass: 'bg-brand-yellow text-black font-black',
-          description: 'SAFE FOR AUTO-ASSEMBLY'
-        };
-      case 'medium':
-        return {
-          label: 'MEDIUM CONFIDENCE',
-          barColor: 'bg-brand-yellow',
-          badgeClass: 'bg-brand-yellow text-black font-black',
-          description: 'CONFIRMATION RECOMMENDED'
-        };
-      case 'low':
-      default:
-        return {
-          label: 'LOW CONFIDENCE',
-          barColor: 'bg-amber-500',
-          badgeClass: 'bg-amber-950 text-amber-200 border border-amber-600',
-          description: 'UNCERTAINTY GATE TRIGGERED'
-        };
-    }
-  };
+  const isAccepted = status ? status === 'high' : confidence >= threshold;
 
-  const config = getStatusConfig();
+  const statusConfig = isAccepted
+    ? {
+        label: 'HIGH CONFIDENCE',
+        badgeClass: 'bg-brand-gold text-black font-black',
+        barColor: 'bg-brand-gold',
+        subtext: '✓ ACCEPTED / ADDED TO MESSAGE',
+      }
+    : {
+        label: 'LOW CONFIDENCE',
+        badgeClass: 'bg-amber-950 text-amber-200 border border-amber-600 font-bold',
+        barColor: 'bg-amber-500',
+        subtext: '↻ HOLD STEADY / TRY AGAIN',
+      };
 
   return (
-    <div className="w-full font-mono">
+    <div className="w-full font-mono select-none">
       {showLabel && (
         <div className="flex items-center justify-between text-xs mb-1.5">
           <div className="flex items-center gap-1.5">
-            <span className={`px-1.5 py-0.5 text-[9px] font-black uppercase ${config.badgeClass}`}>
-              {config.label}
+            <span className={`px-1.5 py-0.5 text-[9px] uppercase tracking-wider rounded ${statusConfig.badgeClass}`}>
+              {statusConfig.label}
             </span>
             <span className="text-[10px] text-neutral-400 hidden sm:inline">
-              // {config.description}
+              // {statusConfig.subtext}
             </span>
           </div>
-          <span className="font-bold text-sm text-white tracking-tight">
-            {confidence}%
-          </span>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-[7.5px] px-1 py-0.2 bg-neutral-900 border border-neutral-700 text-neutral-400 font-mono">
+              {source}
+            </span>
+            {isSimulated && (
+              <span className="text-[7.5px] px-1 py-0.2 bg-neutral-900 border border-neutral-700 text-brand-gold font-mono">
+                ILLUSTRATIVE
+              </span>
+            )}
+            <span className="font-bold text-sm text-white tracking-tight">
+              {confidence.toFixed(1)}%
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Segmented / Technical Meter Bar */}
-      <div className="relative w-full h-3 bg-neutral-900 border border-neutral-700 p-0.5 flex items-center">
+      {/* Segmented Meter Bar */}
+      <div className="relative w-full h-2.5 bg-neutral-900 border border-neutral-800 rounded p-0.5 flex items-center overflow-hidden">
         <div
-          className={`h-full ${config.barColor} transition-all duration-500 ease-out`}
+          className={`h-full ${statusConfig.barColor} transition-all duration-300 ease-out rounded-sm`}
           style={{ width: `${Math.min(Math.max(confidence, 4), 100)}%` }}
         />
-        {/* Safety Threshold Line at 75% */}
+        {/* Threshold Line */}
         <div
-          className="absolute top-0 bottom-0 w-[2px] bg-white z-10"
-          style={{ left: '75%' }}
-          title="Safety Gate Threshold (75%)"
+          className="absolute top-0 bottom-0 w-[2px] bg-white z-10 shadow-sm"
+          style={{ left: `${threshold}%` }}
+          title={`Gating Threshold (${threshold}%)`}
         />
       </div>
 
-      <div className="flex justify-between items-center text-[9px] text-neutral-400 mt-1 font-mono">
+      <div className="flex justify-between items-center text-[8.5px] text-neutral-400 mt-1 font-mono">
         <span>0%</span>
-        <span className="text-neutral-200 font-semibold">GATING THRESHOLD: 75%</span>
+        <span className="text-neutral-300 font-semibold">
+          CONFIDENCE GATE: {threshold}%
+        </span>
         <span>100%</span>
       </div>
     </div>

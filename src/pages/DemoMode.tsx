@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Activity, AlertTriangle, MessageSquare } from 'lucide-react';
+import { ArrowRight, Activity, AlertTriangle, MessageSquare, Sparkles } from 'lucide-react';
 import { DEMO_SCENARIOS, DemoScenario } from '../data/demoScenarios';
 import { TechLabel, CornerBrackets, YellowCornerBracket } from '../components/TechnicalDecoration';
 
@@ -12,18 +12,20 @@ export const DemoMode: React.FC<DemoModeProps> = ({ onSelectScenario }) => {
 
   const getScenarioIcon = (id: string) => {
     switch (id) {
-      case 'hospital':
+      case 'health_urgency':
         return <Activity className="w-4 h-4" />;
-      case 'emergency':
+      case 'emergency_police':
         return <AlertTriangle className="w-4 h-4" />;
-      case 'daily':
+      case 'concept_hospital':
+        return <Sparkles className="w-4 h-4" />;
+      case 'daily_needs':
       default:
         return <MessageSquare className="w-4 h-4" />;
     }
   };
 
   return (
-    <div className="flex-1 w-full bg-black text-white flex flex-col justify-between p-5 select-none relative">
+    <div className="flex-1 w-full bg-black text-white flex flex-col justify-between p-5 select-none relative overflow-y-auto">
       <div className="absolute inset-0 bg-dots-tech opacity-15 pointer-events-none" />
 
       {/* Top Heading */}
@@ -33,11 +35,11 @@ export const DemoMode: React.FC<DemoModeProps> = ({ onSelectScenario }) => {
           DEMO SCENARIOS
         </h1>
         <p className="font-mono text-[10px] text-neutral-400 mt-1">
-          // CHOOSE A REAL-WORLD SITUATION
+          // CHOOSE A SITUATION (AUTHENTIC KAGGLE ASL & CONCEPT WALKTHROUGHS)
         </p>
       </div>
 
-      {/* 3 Scenario Cards */}
+      {/* Scenario Cards */}
       <div className="relative z-10 my-auto space-y-3 py-2">
         {scenarios.map((scenario) => (
           <button
@@ -53,7 +55,13 @@ export const DemoMode: React.FC<DemoModeProps> = ({ onSelectScenario }) => {
                 <span className="font-display font-black text-xl text-brand-yellow px-1">
                   {scenario.number}
                 </span>
-                <span className="px-1.5 py-0.2 bg-brand-yellow text-black text-[9px] font-mono font-black uppercase">
+                <span
+                  className={`px-1.5 py-0.2 text-[9px] font-mono font-black uppercase ${
+                    scenario.isKaggleSupported
+                      ? 'bg-brand-yellow text-black'
+                      : 'bg-neutral-800 text-neutral-300 border border-neutral-700'
+                  }`}
+                >
                   {scenario.categoryBadge}
                 </span>
               </div>
@@ -89,7 +97,9 @@ export const DemoMode: React.FC<DemoModeProps> = ({ onSelectScenario }) => {
 
             {/* Footer row */}
             <div className="flex items-center justify-between font-mono text-[9px] pt-1.5 border-t border-neutral-800">
-              <span className="text-neutral-500">DETERMINISTIC SEQUENCE</span>
+              <span className="text-neutral-500">
+                {scenario.isKaggleSupported ? 'KAGGLE 250 VOCABULARY' : 'CONCEPT WALKTHROUGH'}
+              </span>
               <div className="flex items-center gap-1 font-bold text-brand-yellow">
                 <span>LAUNCH</span>
                 <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -97,12 +107,6 @@ export const DemoMode: React.FC<DemoModeProps> = ({ onSelectScenario }) => {
             </div>
           </button>
         ))}
-      </div>
-
-      {/* Bottom info */}
-      <div className="relative z-10 pt-2 border-t border-neutral-800 flex items-center justify-between text-[9px] font-mono text-neutral-500">
-        <span>PREDICTABLE BENCHMARK DATA</span>
-        <span className="text-brand-yellow font-bold">iQOO 15 READY</span>
       </div>
     </div>
   );
