@@ -97,7 +97,7 @@ export class DemoRecognitionService implements IRecognitionService {
 
 export class LiveKaggleRecognitionService implements IRecognitionService {
   private demoService: DemoRecognitionService;
-  private serverUrl = (import.meta as any).env?.VITE_ASL_SERVER_URL || 'http://127.0.0.1:8000';
+  private serverUrl = (import.meta as any).env?.VITE_ASL_SERVER_URL || 'https://srivenkatesh2007-signify-asl-bridge.hf.space';
   private isServerOnline = false;
   private lastHealthCheck = 0;
   private offscreenCanvas: HTMLCanvasElement | null = null;
@@ -116,11 +116,18 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
     this.lastHealthCheck = now;
 
     try {
-      const res = await fetch(`${this.serverUrl}/health`, {
+      let res = await fetch(`${this.serverUrl}/health`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(1500),
+        signal: AbortSignal.timeout(2000),
       });
+      if (!res.ok) {
+        // Fallback for Gradio status check
+        res = await fetch(`${this.serverUrl}/config`, {
+          method: 'GET',
+          signal: AbortSignal.timeout(2000),
+        });
+      }
       if (res.ok) {
         this.isServerOnline = true;
         this.fetchSignClasses();
@@ -197,18 +204,33 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
     }
 
     try {
-      const res = await fetch(`${this.serverUrl}/predict_frame`, {
+      let data: any = null;
+      let res = await fetch(`${this.serverUrl}/predict_frame`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frame: base64Frame }),
-        signal: AbortSignal.timeout(2000),
+        signal: AbortSignal.timeout(2500),
       });
 
-      if (!res.ok) {
-        return this.demoService.recognizeSign(frameOrKey, preferredSign);
+      if (res.ok) {
+        data = await res.json();
+      } else {
+        // Fallback to Gradio native API endpoint
+        const grRes = await fetch(`${this.serverUrl}/api/predict_frame`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: [base64Frame] }),
+          signal: AbortSignal.timeout(2500),
+        });
+        if (grRes.ok) {
+          const grJson = await grRes.json();
+          data = Array.isArray(grJson.data) ? grJson.data[0] : grJson;
+        }
       }
 
-      const data = await res.json();
+      if (!data) {
+        return this.demoService.recognizeSign(frameOrKey, preferredSign);
+      }
 
       if (data.prediction && data.prediction.word) {
         const pred = data.prediction;
