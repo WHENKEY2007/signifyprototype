@@ -103,7 +103,7 @@ npm run build
 ### 3. Optional: Run the Kaggle ASL Python Bridge Locally
 ```bash
 # In your Python environment with TensorFlow and MediaPipe installed:
-python hf_space/app.py
+python backend/app.py
 # Exposes REST API on http://localhost:7860
 ```
 Set in `.env`:
