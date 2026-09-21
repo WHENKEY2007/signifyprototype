@@ -2,8 +2,8 @@
  * Signify Recognition Service Abstraction
  * 
  * Clean service layer separating sign word recognition from sentence synthesis.
- * Connects to the local Kaggle ASL 250-class ML model via http://127.0.0.1:8000
- * Seamlessly falls back to deterministic simulation when ML bridge is offline.
+ * Connects to the Kaggle ASL 250-class ML model (Hugging Face Cloud / Local Bridge).
+ * Strictly guards against random word spam during live camera streaming.
  */
 
 export interface RecognitionResult {
@@ -44,7 +44,7 @@ export interface IRecognitionService {
 }
 
 export class DemoRecognitionService implements IRecognitionService {
-  private currentIndex = 0;
+  // currentIndex removed to prevent random cycle
   private signKeys = Object.keys(DEMO_SIGNS);
 
   public isSimulated(): boolean {
@@ -56,28 +56,31 @@ export class DemoRecognitionService implements IRecognitionService {
   }
 
   public async recognizeSign(frameOrKey?: any, preferredSign?: string): Promise<RecognitionResult> {
-    const targetKey = typeof frameOrKey === 'string'
-      ? frameOrKey
-      : preferredSign;
+    const targetKey = typeof frameOrKey === 'string' ? frameOrKey : preferredSign;
 
-    await new Promise((resolve) => setTimeout(resolve, 450));
+    // Only recognize when an explicit key/word is requested (e.g. Demo bar buttons)
+    if (targetKey) {
+      await new Promise((resolve) => setTimeout(resolve, 350));
+      const word = targetKey.toUpperCase();
+      const data = DEMO_SIGNS[word] || { text: word, confidence: 95 };
 
-    const word = targetKey && DEMO_SIGNS[targetKey]
-      ? targetKey
-      : this.signKeys[this.currentIndex % this.signKeys.length];
-
-    if (!targetKey) {
-      this.currentIndex++;
+      return {
+        word,
+        sign: word,
+        text: data.text,
+        confidence: data.confidence,
+        status: data.confidence >= 75 ? 'high' : 'low',
+        isSimulated: true,
+      };
     }
 
-    const data = DEMO_SIGNS[word] || { text: word, confidence: 95 };
-
+    // If called without target key during live preview, remain idle (never spam random words!)
     return {
-      word,
-      sign: word,
-      text: data.text,
-      confidence: data.confidence,
-      status: data.confidence >= 75 ? 'high' : 'low',
+      word: '',
+      sign: '',
+      text: 'Show hand to sign',
+      confidence: 0,
+      status: 'low',
       isSimulated: true,
     };
   }
@@ -110,24 +113,17 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
 
   public async checkServerHealth(): Promise<boolean> {
     const now = Date.now();
-    if (now - this.lastHealthCheck < 3000 && this.isServerOnline) {
+    if (now - this.lastHealthCheck < 4000 && this.isServerOnline) {
       return this.isServerOnline;
     }
     this.lastHealthCheck = now;
 
     try {
-      let res = await fetch(`${this.serverUrl}/health`, {
+      const res = await fetch(`${this.serverUrl}/health`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(2000),
       });
-      if (!res.ok) {
-        // Fallback for Gradio status check
-        res = await fetch(`${this.serverUrl}/config`, {
-          method: 'GET',
-          signal: AbortSignal.timeout(2000),
-        });
-      }
       if (res.ok) {
         this.isServerOnline = true;
         this.fetchSignClasses();
@@ -141,7 +137,7 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
 
   private async fetchSignClasses() {
     try {
-      const res = await fetch(`${this.serverUrl}/signs`, { signal: AbortSignal.timeout(1500) });
+      const res = await fetch(`${this.serverUrl}/signs`, { signal: AbortSignal.timeout(2000) });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.signs) && data.signs.length > 0) {
@@ -185,7 +181,7 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
   public async recognizeSign(frameOrKey?: any, preferredSign?: string): Promise<RecognitionResult> {
     const targetKey = typeof frameOrKey === 'string' ? frameOrKey : preferredSign;
 
-    // If explicit sign string requested (e.g. demo sequence or button test)
+    // Explicit demo sequence / button requested
     if (targetKey) {
       return this.demoService.recognizeSign(targetKey, preferredSign);
     }
@@ -193,46 +189,52 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
     // Check server status
     const online = await this.checkServerHealth();
     if (!online) {
-      return this.demoService.recognizeSign(frameOrKey, preferredSign);
+      // In live camera mode without server, remain idle (NO random words!)
+      return {
+        word: '',
+        sign: '',
+        text: 'Connecting to AI model...',
+        confidence: 0,
+        status: 'low',
+        isSimulated: true,
+      };
     }
 
     // Capture real frame from webcam
     const base64Frame = this.captureFrameBase64();
     if (!base64Frame) {
-      // If camera not ready, fall back cleanly
-      return this.demoService.recognizeSign(frameOrKey, preferredSign);
+      return {
+        word: '',
+        sign: '',
+        text: 'Position hand inside frame',
+        confidence: 0,
+        status: 'low',
+        isSimulated: false,
+      };
     }
 
     try {
-      let data: any = null;
-      let res = await fetch(`${this.serverUrl}/predict_frame`, {
+      const res = await fetch(`${this.serverUrl}/predict_frame`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frame: base64Frame }),
         signal: AbortSignal.timeout(2500),
       });
 
-      if (res.ok) {
-        data = await res.json();
-      } else {
-        // Fallback to Gradio native API endpoint
-        const grRes = await fetch(`${this.serverUrl}/api/predict_frame`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: [base64Frame] }),
-          signal: AbortSignal.timeout(2500),
-        });
-        if (grRes.ok) {
-          const grJson = await grRes.json();
-          data = Array.isArray(grJson.data) ? grJson.data[0] : grJson;
-        }
+      if (!res.ok) {
+        return {
+          word: '',
+          sign: '',
+          text: 'AI model busy...',
+          confidence: 0,
+          status: 'low',
+          isSimulated: false,
+        };
       }
 
-      if (!data) {
-        return this.demoService.recognizeSign(frameOrKey, preferredSign);
-      }
+      const data = await res.json();
 
-      if (data.prediction && data.prediction.word) {
+      if (data && data.prediction && data.prediction.word) {
         const pred = data.prediction;
         return {
           word: pred.word,
@@ -245,8 +247,8 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
         };
       }
 
-      // Hand detected but still accumulating or no gesture yet
-      if (data.hand_detected) {
+      // Hand detected but still accumulating or analyzing gesture
+      if (data && data.hand_detected) {
         return {
           word: 'SCANNING',
           sign: 'SCANNING',
@@ -267,8 +269,15 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
         isSimulated: false,
       };
     } catch (e) {
-      console.warn('[LiveKaggleRecognitionService] Fallback to demo:', e);
-      return this.demoService.recognizeSign(frameOrKey, preferredSign);
+      // On network failure, stay idle (NEVER generate random words!)
+      return {
+        word: '',
+        sign: '',
+        text: 'AI model connecting...',
+        confidence: 0,
+        status: 'low',
+        isSimulated: true,
+      };
     }
   }
 
