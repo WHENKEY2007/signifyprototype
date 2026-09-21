@@ -3,7 +3,8 @@
  * 
  * Rule & Context Grammar Engine:
  * Takes individually detected sign tokens from the Kaggle ASL 250 model
- * and constructs natural, grounded phrases for speech synthesis.
+ * and constructs natural, grammatically complete, grounded phrases for speech synthesis
+ * and two-way conversation.
  * 
  * NOTE: This is a deterministic context-aware sentence builder, NOT an LLM.
  * Strictly prevents hallucination by grounding phrases exclusively in recognized tokens.
@@ -23,9 +24,43 @@ export interface ISentenceBuilder {
   getSuggestions(words: string[]): string[];
 }
 
+// Word classification dictionary for intelligent grammatical composition
+const GRAMMAR_ROLES = {
+  greetings: new Set(['HELLO', 'HI', 'BYE', 'GOODBYE', 'MORNING', 'NIGHT']),
+  polite: new Set(['PLEASE', 'THANK YOU', 'THANKYOU']),
+  questions: new Set(['WHERE', 'WHAT', 'WHO', 'WHY', 'WHEN', 'HOW']),
+  states: new Set([
+    'SICK', 'OWIE', 'PAIN', 'HUNGRY', 'THIRSTY', 'TIRED', 'SLEEPY', 'COLD', 'HOT',
+    'HAPPY', 'SAD', 'MAD', 'DIRTY', 'CLEAN', 'QUIET', 'LOUD', 'FAST', 'CUTE',
+    'BETTER', 'BAD', 'FINE', 'WET', 'DRY', 'EMPTY', 'STICKY', 'YUCKY'
+  ]),
+  desires: new Set(['WANT', 'NEED', 'CAN', 'HAVETO', 'HAVE TO', 'LIKE', 'HATE']),
+  actions: new Set([
+    'CALL ON PHONE', 'CALLONPHONE', 'HELP', 'WAIT', 'GO', 'FIND', 'SEE', 'TALK',
+    'EAT', 'DRINK', 'SLEEP', 'WAKE', 'JUMP', 'PLAY', 'CLEAN', 'READ', 'GIVE',
+    'MAKE', 'LOOK', 'LISTEN', 'HEAR', 'SAY', 'TOUCH', 'DANCE', 'CRY', 'SMILE',
+    'CUT', 'BLOW', 'FALL', 'RIDE', 'HIDE', 'STAY', 'FINISH', 'STOP', 'SHHH'
+  ]),
+  people: new Set([
+    'I', 'ME', 'YOU', 'WE', 'MOM', 'DAD', 'BOY', 'GIRL', 'MAN', 'CHILD', 'PERSON',
+    'BROTHER', 'AUNT', 'UNCLE', 'GRANDMA', 'GRANDPA', 'POLICE', 'FIREMAN', 'DOCTOR', 'BABY'
+  ]),
+  places: new Set([
+    'HOME', 'BEDROOM', 'BACKYARD', 'FARM', 'STORE', 'ROOM', 'POOL', 'CLOSET', 'BATH', 'POTTY'
+  ]),
+  foodAndDrinks: new Set([
+    'WATER', 'FOOD', 'APPLE', 'PIZZA', 'ICECREAM', 'ICE CREAM', 'CHOCOLATE', 'MILK',
+    'CEREAL', 'CARROT', 'FRENCHFRIES', 'FRENCH FRIES', 'SNACK', 'ORANGE', 'NUTS', 'GUM'
+  ]),
+  objects: new Set([
+    'CAR', 'TV', 'BED', 'PHONE', 'CHAIR', 'TABLE', 'BOOK', 'TOY', 'PEN', 'PENCIL',
+    'SHIRT', 'SHOE', 'HAT', 'JACKET', 'JEANS', 'BALLOON', 'DOLL', 'PUZZLE', 'MEDICINE'
+  ])
+};
+
 export class ContextAwareSentenceBuilder implements ISentenceBuilder {
   /**
-   * Builds a natural sentence from recognized sign tokens.
+   * Builds a natural, meaningful, grammatically complete sentence from recognized sign tokens.
    * Deduplicates adjacent identical tokens and matches grounded context patterns.
    */
   public buildSentence(rawWords: string[]): SentenceResult {
@@ -48,217 +83,97 @@ export class ContextAwareSentenceBuilder implements ISentenceBuilder {
     }
 
     const words = dedupedWords;
+    const tokenSet = new Set(words);
 
-    // ==========================================
-    // Authentic Kaggle ASL 250 Grounded Contexts
-    // ==========================================
+    // =========================================================================
+    // 1. HIGH-PRIORITY MULTI-TOKEN IDIOMS & SITUATIONAL COMBINATIONS
+    // =========================================================================
 
-    // Health & Urgent Assistance (SICK, OWIE, CALL ON PHONE)
-    if (words.includes('SICK') && words.includes('OWIE') && words.includes('CALL ON PHONE')) {
+    // Emergency & Medical
+    if (tokenSet.has('SICK') && tokenSet.has('OWIE') && tokenSet.has('CALL ON PHONE')) {
       return {
-        primary: "I am sick and in pain. Please call someone on the phone.",
+        primary: "I am sick and in pain. Please call someone on the phone right away.",
         suggestions: [
-          "I am sick and in pain. Please call someone on the phone.",
-          "I need medical assistance right now. Please call on the phone.",
-          "I am hurt and sick. Please make a phone call."
+          "I am sick and in pain. Please call someone on the phone right away.",
+          "I need medical assistance immediately, please call for help.",
+          "I am hurt and feeling sick. Please make a phone call."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    if (words.includes('SICK') && words.includes('OWIE')) {
+    if (tokenSet.has('SICK') && tokenSet.has('OWIE')) {
       return {
-        primary: "I am sick and in pain.",
+        primary: "I am sick and experiencing severe pain.",
         suggestions: [
-          "I am sick and in pain.",
-          "I am feeling sick and hurting.",
-          "I need help, I am sick."
+          "I am sick and experiencing severe pain.",
+          "I am feeling very unwell and hurting.",
+          "I need medical help, I am sick and hurt."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    if (words.includes('SICK') && words.includes('CALL ON PHONE')) {
+    if (tokenSet.has('SICK') && tokenSet.has('CALL ON PHONE')) {
       return {
-        primary: "I am sick. Please call someone on the phone.",
+        primary: "I am feeling sick. Please call someone on the phone for me.",
         suggestions: [
-          "I am sick. Please call someone on the phone.",
-          "I need a phone call made for me, I am sick.",
-          "Please call emergency contacts, I am unwell."
+          "I am feeling sick. Please call someone on the phone for me.",
+          "I need you to call someone for me, I am unwell.",
+          "Please call emergency contacts, I am sick."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    if (words.includes('OWIE') && words.includes('CALL ON PHONE')) {
+    if (tokenSet.has('OWIE') && tokenSet.has('CALL ON PHONE')) {
       return {
-        primary: "I am hurt. Please call someone on the phone.",
+        primary: "I am injured and in pain. Please call someone on the phone.",
         suggestions: [
-          "I am hurt. Please call someone on the phone.",
-          "I am in pain. Please make a call.",
-          "Please call for assistance."
+          "I am injured and in pain. Please call someone on the phone.",
+          "I am hurt. Please call someone for me right now.",
+          "Please make an emergency phone call, I am hurt."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    // Emergency Services (POLICE, FIREMAN)
-    if (words.includes('POLICE') && words.includes('CALL ON PHONE')) {
+    if (tokenSet.has('POLICE') && tokenSet.has('CALL ON PHONE')) {
       return {
-        primary: "Please call the police on the phone.",
+        primary: "Please call the police on the phone immediately.",
         suggestions: [
-          "Please call the police on the phone.",
-          "I need the police called right away.",
-          "Please dial the police for me."
+          "Please call the police on the phone immediately.",
+          "I need the police contacted right away.",
+          "Please dial emergency police for me."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    if (words.includes('FIREMAN') && words.includes('CALL ON PHONE')) {
+    if (tokenSet.has('FIREMAN') && tokenSet.has('CALL ON PHONE')) {
       return {
-        primary: "Please call the fire department on the phone.",
+        primary: "Please call the fire department on the phone right away.",
         suggestions: [
-          "Please call the fire department on the phone.",
+          "Please call the fire department on the phone right away.",
           "Emergency, please call firefighters.",
-          "Please call the emergency services."
+          "Please contact the emergency services."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    // Daily Needs (WATER, THIRSTY, FOOD, HUNGRY, PLEASE, THANK YOU)
-    if (words.includes('WATER') && words.includes('PLEASE') && words.includes('THANK YOU')) {
+    if (tokenSet.has('DOCTOR') && (tokenSet.has('PAIN') || tokenSet.has('OWIE'))) {
       return {
-        primary: "May I please have water? Thank you.",
+        primary: "I need a doctor. I am in severe pain.",
         suggestions: [
-          "May I please have water? Thank you.",
-          "Please get me some water. Thank you.",
-          "I need water please, thank you."
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('WATER') && words.includes('THIRSTY')) {
-      return {
-        primary: "I am thirsty. Can I please have water?",
-        suggestions: [
-          "I am thirsty. Can I please have water?",
-          "I need a glass of water.",
-          "Where can I get water?"
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('FOOD') && words.includes('HUNGRY')) {
-      return {
-        primary: "I am hungry. Can I have some food?",
-        suggestions: [
-          "I am hungry. Can I have some food?",
-          "I need something to eat, please.",
-          "Where is food available?"
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('WATER') && words.includes('PLEASE')) {
-      return {
-        primary: "May I please have some water?",
-        suggestions: [
-          "May I please have some water?",
-          "Water please.",
-          "Could you bring me water?"
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    // Social & Conversation (HELLO, WAIT, TALK, YES, NO, THANK YOU)
-    if (words.includes('HELLO') && words.includes('WAIT') && words.includes('TALK')) {
-      return {
-        primary: "Hello, please wait a moment. Can we talk?",
-        suggestions: [
-          "Hello, please wait a moment. Can we talk?",
-          "Hello, please wait, I would like to talk with you.",
-          "Hi, give me a moment to talk."
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('HELLO') && words.includes('TALK')) {
-      return {
-        primary: "Hello! Can we talk?",
-        suggestions: [
-          "Hello! Can we talk?",
-          "Hello, I want to talk to you.",
-          "Hi, let's talk."
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('PLEASE') && words.includes('WAIT')) {
-      return {
-        primary: "Please wait a moment.",
-        suggestions: [
-          "Please wait a moment.",
-          "Could you please wait for me?",
-          "Please hold on."
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('YES') && words.includes('THANK YOU')) {
-      return {
-        primary: "Yes, thank you very much.",
-        suggestions: [
-          "Yes, thank you very much.",
-          "Yes, thank you.",
-          "Yes, I appreciate it."
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    if (words.includes('NO') && words.includes('THANK YOU')) {
-      return {
-        primary: "No, thank you.",
-        suggestions: [
-          "No, thank you.",
-          "No, thank you though.",
-          "No, I am okay, thank you."
-        ],
-        isContextReady: true,
-        tokensUsed: words,
-      };
-    }
-
-    // Concept Scenario Patterns (Clearly preserved for concept walkthroughs)
-    if (words.includes('DOCTOR') && words.includes('PAIN')) {
-      return {
-        primary: "I need a doctor. I'm in pain.",
-        suggestions: [
-          "I need a doctor. I'm in pain.",
-          "Please call a doctor. I have severe pain.",
+          "I need a doctor. I am in severe pain.",
+          "Please call a doctor for me, I am hurting.",
           "I need urgent medical care."
         ],
         isContextReady: true,
@@ -266,165 +181,501 @@ export class ContextAwareSentenceBuilder implements ISentenceBuilder {
       };
     }
 
-    if (words.includes('HELP') && (words.includes('DOCTOR') || words.includes('PAIN'))) {
+    if (tokenSet.has('HELP') && (tokenSet.has('DOCTOR') || tokenSet.has('PAIN') || tokenSet.has('OWIE'))) {
       return {
-        primary: "Please help me, I need a doctor.",
+        primary: "Please help me, I am in pain and need a doctor.",
         suggestions: [
-          "Please help me, I need a doctor.",
-          "Help me, I am in pain.",
-          "I need medical help right away."
+          "Please help me, I am in pain and need a doctor.",
+          "Help me, I am feeling severe pain.",
+          "I need immediate medical help."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    if (words.includes('AMBULANCE') || (words.includes('HELP') && words.includes('DANGER'))) {
+    // Daily Needs & Hydration / Food
+    if (tokenSet.has('WATER') && tokenSet.has('PLEASE') && tokenSet.has('THANK YOU')) {
       return {
-        primary: "Please call an ambulance. I need help.",
+        primary: "May I please have some water? Thank you very much.",
         suggestions: [
-          "Please call an ambulance. I need help.",
-          "Emergency, please call an ambulance.",
-          "I need immediate emergency help."
+          "May I please have some water? Thank you very much.",
+          "Please give me some water, thank you.",
+          "I need some water please, thank you."
         ],
         isContextReady: true,
         tokensUsed: words,
       };
     }
 
-    // ==========================================
-    // Single Token Grounded Contexts
-    // ==========================================
+    if (tokenSet.has('WATER') && tokenSet.has('THIRSTY')) {
+      return {
+        primary: "I am very thirsty. May I please have some water?",
+        suggestions: [
+          "I am very thirsty. May I please have some water?",
+          "I need a drink of water right now.",
+          "Where can I find drinking water?"
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('FOOD') && tokenSet.has('HUNGRY')) {
+      return {
+        primary: "I am hungry. Can I please have something to eat?",
+        suggestions: [
+          "I am hungry. Can I please have something to eat?",
+          "I need some food right now, please.",
+          "Where can I get some food?"
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('WATER') && tokenSet.has('PLEASE')) {
+      return {
+        primary: "Please may I have some water?",
+        suggestions: [
+          "Please may I have some water?",
+          "Could you please bring me some water?",
+          "I would like some water, please."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('FOOD') && tokenSet.has('PLEASE')) {
+      return {
+        primary: "Please may I have some food?",
+        suggestions: [
+          "Please may I have some food?",
+          "Could you please give me something to eat?",
+          "I need some food, please."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('HELP') && tokenSet.has('PLEASE')) {
+      return {
+        primary: "Could you please help me?",
+        suggestions: [
+          "Could you please help me?",
+          "Please help me with this.",
+          "I need some assistance, please."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('THANK YOU') && tokenSet.has('HELP')) {
+      return {
+        primary: "Thank you very much for your help.",
+        suggestions: [
+          "Thank you very much for your help.",
+          "Thank you for helping me.",
+          "I truly appreciate your assistance."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    // Social & Conversation
+    if (tokenSet.has('HELLO') && tokenSet.has('WAIT') && tokenSet.has('TALK')) {
+      return {
+        primary: "Hello, please wait a moment. Can we talk?",
+        suggestions: [
+          "Hello, please wait a moment. Can we talk?",
+          "Hello, give me a moment, I would like to talk with you.",
+          "Hi! Please wait so we can have a conversation."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('HELLO') && tokenSet.has('TALK')) {
+      return {
+        primary: "Hello! Can we please talk?",
+        suggestions: [
+          "Hello! Can we please talk?",
+          "Hello, I would like to talk with you.",
+          "Hi there, let's talk."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('PLEASE') && tokenSet.has('WAIT')) {
+      return {
+        primary: "Please wait for me a moment.",
+        suggestions: [
+          "Please wait for me a moment.",
+          "Could you please wait here?",
+          "Hold on for a moment, please."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('YES') && tokenSet.has('THANK YOU')) {
+      return {
+        primary: "Yes, thank you very much.",
+        suggestions: [
+          "Yes, thank you very much.",
+          "Yes, thank you!",
+          "Yes, I appreciate that."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('NO') && tokenSet.has('THANK YOU')) {
+      return {
+        primary: "No, thank you.",
+        suggestions: [
+          "No, thank you.",
+          "No, but thank you for asking.",
+          "No, I am alright, thank you."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    // Restroom / Facilities
+    if (tokenSet.has('WHERE') && (tokenSet.has('BATH') || tokenSet.has('POTTY') || tokenSet.has('ROOM'))) {
+      return {
+        primary: "Excuse me, where is the nearest restroom?",
+        suggestions: [
+          "Excuse me, where is the nearest restroom?",
+          "Can you tell me where the bathroom is?",
+          "Where can I find the restroom?"
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    if (tokenSet.has('HAVETO') || tokenSet.has('HAVE TO')) {
+      if (tokenSet.has('BATH') || tokenSet.has('POTTY')) {
+        return {
+          primary: "I have to use the restroom right now.",
+          suggestions: [
+            "I have to use the restroom right now.",
+            "I need to go to the bathroom urgently.",
+            "Where is the nearest bathroom?"
+          ],
+          isContextReady: true,
+          tokensUsed: words,
+        };
+      }
+      if (tokenSet.has('GO')) {
+        return {
+          primary: "I have to go now.",
+          suggestions: ["I have to go now.", "I must leave now.", "Time for me to go."],
+          isContextReady: true,
+          tokensUsed: words,
+        };
+      }
+    }
+
+    // Location / Questions (WHERE + [Noun])
+    if (tokenSet.has('WHERE')) {
+      const nonWhere = words.filter((w) => w !== 'WHERE');
+      if (nonWhere.length > 0) {
+        const target = nonWhere.map((w) => w.toLowerCase()).join(' and ');
+        return {
+          primary: `Excuse me, where can I find ${target}?`,
+          suggestions: [
+            `Excuse me, where can I find ${target}?`,
+            `Where is the ${target}?`,
+            `Could you direct me to the ${target}?`
+          ],
+          isContextReady: true,
+          tokensUsed: words,
+        };
+      }
+    }
+
+    // Time inquiries
+    if (tokenSet.has('TIME')) {
+      return {
+        primary: "Excuse me, what time is it?",
+        suggestions: [
+          "Excuse me, what time is it?",
+          "Do you know what time it is right now?",
+          "Can you tell me the time, please?"
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    // Sleep / Fatigue
+    if (tokenSet.has('SLEEP') || tokenSet.has('SLEEPY') || tokenSet.has('NAP')) {
+      if (tokenSet.has('TIRED') || tokenSet.has('BED')) {
+        return {
+          primary: "I am feeling very tired and need to sleep.",
+          suggestions: [
+            "I am feeling very tired and need to sleep.",
+            "I need to go to bed and rest.",
+            "I am sleepy, I need to sleep."
+          ],
+          isContextReady: true,
+          tokensUsed: words,
+        };
+      }
+    }
+
+    // Going places
+    if (tokenSet.has('GO') && tokenSet.has('HOME')) {
+      return {
+        primary: "I want to go home now.",
+        suggestions: [
+          "I want to go home now.",
+          "Can we go home please?",
+          "It is time for me to head home."
+        ],
+        isContextReady: true,
+        tokensUsed: words,
+      };
+    }
+
+    // =========================================================================
+    // 2. SINGLE TOKEN MEANINGFUL SENTENCES
+    // =========================================================================
     if (words.length === 1) {
       const single = words[0];
 
-      if (single === 'SICK') {
+      const singleMap: Record<string, { primary: string; suggestions: string[] }> = {
+        'SICK': {
+          primary: "I am feeling sick and unwell.",
+          suggestions: ["I am feeling sick and unwell.", "I feel very sick.", "I am sick."]
+        },
+        'OWIE': {
+          primary: "I am in pain and hurting.",
+          suggestions: ["I am in pain and hurting.", "That hurts me.", "I am feeling pain."]
+        },
+        'CALL ON PHONE': {
+          primary: "Please make a phone call for me.",
+          suggestions: ["Please make a phone call for me.", "Can you call someone on the phone?", "Please call on the phone."]
+        },
+        'CALLONPHONE': {
+          primary: "Please make a phone call for me.",
+          suggestions: ["Please make a phone call for me.", "Can you call someone on the phone?", "Please call on the phone."]
+        },
+        'POLICE': {
+          primary: "I need assistance from the police.",
+          suggestions: ["I need assistance from the police.", "Please contact the police.", "Call the police, please."]
+        },
+        'FIREMAN': {
+          primary: "Please call the fire department.",
+          suggestions: ["Please call the fire department.", "I need the fire department.", "Call firefighters, please."]
+        },
+        'WATER': {
+          primary: "I would like some water, please.",
+          suggestions: ["I would like some water, please.", "May I have some water?", "Where can I find drinking water?"]
+        },
+        'FOOD': {
+          primary: "I would like some food, please.",
+          suggestions: ["I would like some food, please.", "Can I have something to eat?", "I need food, please."]
+        },
+        'THIRSTY': {
+          primary: "I am very thirsty.",
+          suggestions: ["I am very thirsty.", "I need something to drink.", "Can I please have water?"]
+        },
+        'HUNGRY': {
+          primary: "I am feeling hungry.",
+          suggestions: ["I am feeling hungry.", "I need something to eat.", "Can I have food, please?"]
+        },
+        'HELLO': {
+          primary: "Hello! How are you?",
+          suggestions: ["Hello! How are you?", "Hello, nice to meet you.", "Hi there!"]
+        },
+        'BYE': {
+          primary: "Goodbye, have a great day!",
+          suggestions: ["Goodbye, have a great day!", "See you later!", "Bye!"]
+        },
+        'THANK YOU': {
+          primary: "Thank you very much.",
+          suggestions: ["Thank you very much.", "Thank you for your help.", "I appreciate it!"]
+        },
+        'PLEASE': {
+          primary: "Please, if you could.",
+          suggestions: ["Please, if you could.", "Yes, please.", "Could you please help me?"]
+        },
+        'YES': {
+          primary: "Yes, that is correct.",
+          suggestions: ["Yes, that is correct.", "Yes, please.", "Yes, I agree."]
+        },
+        'NO': {
+          primary: "No, thank you.",
+          suggestions: ["No, thank you.", "No, that is not correct.", "No, not right now."]
+        },
+        'WAIT': {
+          primary: "Please wait a moment for me.",
+          suggestions: ["Please wait a moment for me.", "Wait for me, please.", "Hold on a minute."]
+        },
+        'HELP': {
+          primary: "I need help, please assist me.",
+          suggestions: ["I need help, please assist me.", "Please help me.", "Can someone help me?"]
+        },
+        'TIRED': {
+          primary: "I am feeling very tired.",
+          suggestions: ["I am feeling very tired.", "I need to rest.", "I am exhausted."]
+        },
+        'SLEEPY': {
+          primary: "I am feeling very sleepy.",
+          suggestions: ["I am feeling very sleepy.", "I need to go to sleep.", "I am ready for bed."]
+        },
+        'COLD': {
+          primary: "I am feeling very cold.",
+          suggestions: ["I am feeling very cold.", "It is too cold for me.", "I need to get warm."]
+        },
+        'HOT': {
+          primary: "I am feeling very hot.",
+          suggestions: ["I am feeling very hot.", "It is too hot in here.", "I need to cool down."]
+        },
+        'HAPPY': {
+          primary: "I am feeling happy today!",
+          suggestions: ["I am feeling happy today!", "I am so glad.", "This makes me happy."]
+        },
+        'SAD': {
+          primary: "I am feeling sad right now.",
+          suggestions: ["I am feeling sad right now.", "I feel down today.", "I need a moment."]
+        },
+        'FINE': {
+          primary: "I am doing fine, thank you.",
+          suggestions: ["I am doing fine, thank you.", "Everything is fine.", "I am okay."]
+        },
+        'POTTY': {
+          primary: "I need to use the restroom, please.",
+          suggestions: ["I need to use the restroom, please.", "Where is the bathroom?", "I need the toilet."]
+        },
+        'BATH': {
+          primary: "I need to use the bathroom, please.",
+          suggestions: ["I need to use the bathroom, please.", "Where is the restroom?", "I need to wash up."]
+        }
+      };
+
+      if (singleMap[single]) {
         return {
-          primary: "I am feeling sick.",
-          suggestions: ["I am feeling sick.", "I feel unwell.", "I am sick."],
+          primary: singleMap[single].primary,
+          suggestions: singleMap[single].suggestions,
           isContextReady: false,
           tokensUsed: words,
         };
       }
 
-      if (single === 'OWIE') {
-        return {
-          primary: "I am in pain.",
-          suggestions: ["I am in pain.", "That hurts.", "I am feeling pain."],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'CALL ON PHONE') {
-        return {
-          primary: "Please make a phone call.",
-          suggestions: ["Please make a phone call.", "Can you call someone on the phone?", "Please call on phone."],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'POLICE') {
-        return {
-          primary: "I need the police.",
-          suggestions: ["I need the police.", "Please contact the police.", "Police needed."],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'WATER') {
-        return {
-          primary: "I need water.",
-          suggestions: ["I need water.", "Can I have some water?", "Where can I get water?"],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'HELLO') {
-        return {
-          primary: "Hello!",
-          suggestions: ["Hello!", "Hello, how are you?", "Hi!"],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'THANK YOU') {
-        return {
-          primary: "Thank you.",
-          suggestions: ["Thank you.", "Thank you very much.", "Thanks!"],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'PLEASE') {
-        return {
-          primary: "Please.",
-          suggestions: ["Please.", "Yes, please.", "Could you please help?"],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'YES') {
-        return {
-          primary: "Yes.",
-          suggestions: ["Yes.", "Yes, correct.", "Yes, please."],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'NO') {
-        return {
-          primary: "No.",
-          suggestions: ["No.", "No, thank you.", "No, not right now."],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'WAIT') {
-        return {
-          primary: "Please wait.",
-          suggestions: ["Please wait.", "Wait a moment.", "Wait for me please."],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
-
-      if (single === 'HELP') {
-        return {
-          primary: "I need help.",
-          suggestions: ["I need help.", "Please help me.", "Can you help me?"],
-          isContextReady: false,
-          tokensUsed: words,
-        };
-      }
+      // Default single token complete sentence
+      const lower = single.toLowerCase();
+      const cap = lower.charAt(0).toUpperCase() + lower.slice(1);
+      return {
+        primary: `I am communicating: ${cap}.`,
+        suggestions: [
+          `I am communicating: ${cap}.`,
+          `Please note: ${cap}.`,
+          cap + '.'
+        ],
+        isContextReady: false,
+        tokensUsed: words,
+      };
     }
 
-    // ==========================================
-    // Generic Multi-Word Natural Formatting
-    // ==========================================
-    const formattedWords = words.map((w) => {
-      const lower = w.toLowerCase();
-      return lower.charAt(0).toUpperCase() + lower.slice(1);
-    });
+    // =========================================================================
+    // 3. INTELLIGENT GRAMMATICAL SYNTHESIS FOR MULTI-WORD SEQUENCES
+    // =========================================================================
+    // Classify words in the sequence
+    const hasPolite = words.some((w) => GRAMMAR_ROLES.polite.has(w));
+    const states = words.filter((w) => GRAMMAR_ROLES.states.has(w));
+    const actions = words.filter((w) => GRAMMAR_ROLES.actions.has(w));
+    const foods = words.filter((w) => GRAMMAR_ROLES.foodAndDrinks.has(w));
+    const objects = words.filter((w) => GRAMMAR_ROLES.objects.has(w));
+    const people = words.filter((w) => GRAMMAR_ROLES.people.has(w));
+    const places = words.filter((w) => GRAMMAR_ROLES.places.has(w));
 
-    const assembledPhrase = formattedWords.join(' ') + '.';
+    let primarySentence = '';
+    const altSuggestions: string[] = [];
+
+    // Pattern A: State + Request/Need (e.g. [HUNGRY, FOOD], [COLD, JACKET])
+    if (states.length > 0 && (foods.length > 0 || objects.length > 0)) {
+      const stateDesc = states.map((s) => s.toLowerCase()).join(' and ');
+      const targetItems = [...foods, ...objects].map((o) => o.toLowerCase()).join(' and ');
+      primarySentence = `I am feeling ${stateDesc}, so I need some ${targetItems}${hasPolite ? ', please' : '.'}`;
+      altSuggestions.push(primarySentence);
+      altSuggestions.push(`Please help me get ${targetItems}, I am ${stateDesc}.`);
+    }
+    // Pattern B: Multiple states (e.g. [SICK, TIRED])
+    else if (states.length >= 2) {
+      const stateDesc = states.map((s) => s.toLowerCase()).join(' and ');
+      primarySentence = `I am feeling very ${stateDesc}${hasPolite ? ', please help me' : '.'}`;
+      altSuggestions.push(primarySentence);
+      altSuggestions.push(`I feel both ${stateDesc}.`);
+    }
+    // Pattern C: Action + Object / Person (e.g. [CALL ON PHONE, MOM], [FIND, CAR], [CLEAN, ROOM])
+    else if (actions.length > 0 && (people.length > 0 || objects.length > 0 || places.length > 0)) {
+      const actionName = actions[0].toLowerCase();
+      const target = [...people, ...objects, ...places].map((t) => t.toLowerCase()).join(' and ');
+      if (hasPolite) {
+        primarySentence = `Please ${actionName} the ${target} for me.`;
+      } else {
+        primarySentence = `I need to ${actionName} the ${target}.`;
+      }
+      altSuggestions.push(primarySentence);
+      altSuggestions.push(`Could you help me ${actionName} ${target}?`);
+    }
+    // Pattern D: Polite Request of items (e.g. [PLEASE, WATER], [PLEASE, FOOD, TABLE])
+    else if (hasPolite && (foods.length > 0 || objects.length > 0)) {
+      const items = [...foods, ...objects].map((i) => i.toLowerCase()).join(' and ');
+      primarySentence = `Could you please provide some ${items}?`;
+      altSuggestions.push(primarySentence);
+      altSuggestions.push(`Please may I have the ${items}?`);
+    }
+    // Pattern E: Natural general synthesis connecting words with proper English syntax
+    else {
+      const cleanedTokens = words.map((w) => {
+        const l = w.toLowerCase();
+        if (l === 'callonphone') return 'call on phone';
+        if (l === 'frenchfries') return 'french fries';
+        if (l === 'icecream') return 'ice cream';
+        return l;
+      });
+
+      if (cleanedTokens.length === 2) {
+        primarySentence = `I need ${cleanedTokens[0]} and ${cleanedTokens[1]}.`;
+      } else {
+        const last = cleanedTokens[cleanedTokens.length - 1];
+        const initial = cleanedTokens.slice(0, -1).join(', ');
+        primarySentence = `I am signing about ${initial}, and ${last}.`;
+      }
+      altSuggestions.push(primarySentence);
+      altSuggestions.push(`Please note: ${words.join(' ')}.`);
+    }
+
+    // Capitalize first letter and ensure ending punctuation
+    primarySentence = primarySentence.charAt(0).toUpperCase() + primarySentence.slice(1);
+    if (!/[.!?]$/.test(primarySentence)) {
+      primarySentence += '.';
+    }
+
+    if (altSuggestions.length < 3) {
+      altSuggestions.push(`I am communicating: "${primarySentence}"`);
+    }
 
     return {
-      primary: assembledPhrase,
-      suggestions: [
-        assembledPhrase,
-        `I am signing: ${assembledPhrase}`,
-        `Please note: ${assembledPhrase}`
-      ],
-      isContextReady: words.length >= 2,
+      primary: primarySentence,
+      suggestions: altSuggestions.slice(0, 3),
+      isContextReady: true,
       tokensUsed: words,
     };
   }
