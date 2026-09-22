@@ -98,7 +98,7 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
     return this.availableSigns;
   }
 
-  public async checkServerHealth(): Promise<boolean> {
+  public async checkServerHealth(isExplicitRetry = false): Promise<boolean> {
     const now = Date.now();
     if (now - this.lastHealthCheck < 3000 && this.serverStatus === 'connected') {
       return true;
@@ -106,13 +106,18 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
     this.lastHealthCheck = now;
 
     const urlsToCheck = this.serverUrl ? [this.serverUrl] : this.candidateUrls;
+    if (this.serverStatus !== 'connected') {
+      this.serverStatus = 'connecting';
+    }
+
+    const timeoutMs = isExplicitRetry ? 12000 : 5000;
 
     for (const url of urlsToCheck) {
       try {
         const res = await fetch(`${url}/health`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(1800),
+          signal: AbortSignal.timeout(timeoutMs),
         });
         if (res.ok) {
           this.serverUrl = url;
@@ -120,7 +125,7 @@ export class LiveKaggleRecognitionService implements IRecognitionService {
           return true;
         }
       } catch {
-        // Try next
+        // Try next candidate
       }
     }
 

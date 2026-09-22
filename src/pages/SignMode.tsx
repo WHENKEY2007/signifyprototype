@@ -294,6 +294,7 @@ export const SignMode: React.FC<SignModeProps> = ({
   };
 
   const isBackendConnected = serverStatus === 'connected';
+  const isBackendConnecting = serverStatus === 'connecting';
 
   return (
     <div className="flex-1 w-full bg-[#050505] text-white flex flex-col justify-between select-none relative overflow-y-auto">
@@ -326,10 +327,15 @@ export const SignMode: React.FC<SignModeProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                 <span>● LIVE KAGGLE MODEL</span>
               </div>
+            ) : isBackendConnecting ? (
+              <div className="flex items-center gap-1.5 font-mono text-[9px] px-2 py-0.5 bg-neutral-900 text-yellow-400 border border-yellow-500/50 rounded-full font-bold shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-ping" />
+                <span>WAKING UP AI...</span>
+              </div>
             ) : (
               <div className="flex items-center gap-1.5 font-mono text-[9px] px-2 py-0.5 bg-neutral-900 text-amber-400 border border-amber-500/50 rounded-full font-bold shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                <span>○ MODEL OFFLINE</span>
+                <span>○ MODEL SLEEPING</span>
               </div>
             )
           ) : (
@@ -340,19 +346,35 @@ export const SignMode: React.FC<SignModeProps> = ({
         </div>
       </div>
 
-      {/* OFFLINE MODEL BANNER (Shown if in live mode but backend is unreachable) */}
-      {currentMode === 'live' && !isBackendConnected && (
+      {/* CONNECTING / WAKING UP BANNER */}
+      {currentMode === 'live' && isBackendConnecting && (
+        <div className="mx-3.5 mt-2.5 p-2.5 rounded-xl bg-neutral-900 border border-brand-gold/60 flex items-center justify-between z-20 animate-in fade-in">
+          <div className="flex items-center gap-2 text-brand-gold font-sans text-xs">
+            <span className="w-2 h-2 rounded-full bg-brand-gold animate-ping flex-shrink-0" />
+            <span>Waking up Kaggle ASL model (Render free tier cold start ~30s)...</span>
+          </div>
+          <button
+            onClick={() => toggleMode('demo')}
+            className="px-2 py-1 bg-brand-gold hover:bg-yellow-400 text-black font-mono font-black text-[9px] uppercase rounded"
+          >
+            USE DEMO
+          </button>
+        </div>
+      )}
+
+      {/* SLEEPING / OFFLINE MODEL BANNER */}
+      {currentMode === 'live' && !isBackendConnected && !isBackendConnecting && (
         <div className="mx-3.5 mt-2.5 p-2.5 rounded-xl bg-amber-950/40 border border-amber-600/60 flex items-center justify-between z-20 animate-in fade-in">
           <div className="flex items-center gap-2 text-amber-300 font-sans text-xs">
             <WifiOff className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
-            <span>Kaggle ASL bridge offline. Real inference unavailable.</span>
+            <span>Kaggle ASL cloud instance is asleep. Click WAKE UP to connect.</span>
           </div>
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleRetryBackend}
               className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 text-neutral-200 border border-neutral-700 font-mono text-[9px] font-bold rounded"
             >
-              RETRY
+              WAKE UP
             </button>
             <button
               onClick={() => toggleMode('demo')}
