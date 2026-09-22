@@ -111,11 +111,3 @@ Set in `.env`:
 VITE_ASL_SERVER_URL=http://localhost:7860
 ```
 
----
-
-## 6. Recommended 2-Minute Hackathon Demo Flow
-1. **0:00 - 0:30 (Problem & Vision)**: Introduce Signify as an on-device accessibility bridge for 70M+ deaf individuals.
-2. **0:30 - 1:00 (Live Signing & Confidence Gate)**: Show camera detecting authentic Kaggle sign `SICK` (87.4%) → `OWIE` → `CALL ON PHONE`. Demonstrate that low-confidence gestures (<70%) are held rather than accepted.
-3. **1:00 - 1:30 (Context Sentence & Speech)**: Show context-aware sentence builder producing *"I am sick and in pain. Please call someone on the phone."* and speaking it aloud.
-4. **1:30 - 1:45 (Reverse Speech Mode)**: Speak into the phone microphone, showing instant high-contrast visual readout for the deaf user.
-5. **1:45 - 2:00 (NPU & Office Kit Roadmap)**: Open the **Judge Mode (60s Audit)** modal. Explain the Qualcomm Hexagon NPU execution path and iQOO Office Kit laptop bridge.
